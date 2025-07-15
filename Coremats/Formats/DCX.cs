@@ -7,7 +7,7 @@ namespace Coremats;
 /// </summary>
 public static class DCX
 {
-    internal static bool Is(BinaryReaderEx br)
+    public static bool Is(BinaryReaderEx br)
     {
         if (br.Stream.Length < 4)
             return false;
@@ -76,7 +76,7 @@ public static class DCX
     }
     #endregion
 
-    internal static byte[] Decompress(BinaryReaderEx br, out Type type)
+    public static byte[] Decompress(BinaryReaderEx br, out Type type)
     {
         br.BigEndian = true;
         string magic = br.GetASCII(0, 4);
@@ -429,7 +429,7 @@ public static class DCX
     }
     #endregion
 
-    internal static void Compress(byte[] data, BinaryWriterEx bw, Type type)
+    public static void Compress(byte[] data, BinaryWriterEx bw, Type type)
     {
         bw.BigEndian = true;
         if (type == Type.Zlib)
