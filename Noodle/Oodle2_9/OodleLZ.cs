@@ -2,7 +2,7 @@
 
 namespace Noodle.Oodle2_9;
 
-public class OodleLZ
+public partial class OodleLZ
 {
     public enum OodleLZ_Verbosity : int
     {
@@ -135,14 +135,13 @@ public class OodleLZ
         OodleLZ_FuzzSafe_Yes = 1
     }
 
-    [DllImport("oo2core_9_win64.dll", CallingConvention = CallingConvention.StdCall)]
-    public static extern nint OodleLZ_Compress(
+    [LibraryImport("oo2core_9_win64.dll", EntryPoint = "OodleLZ_Compress")]
+    [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+    private static partial nint _OodleLZ_Compress(
         OodleLZ_Compressor compressor,
-        [MarshalAs(UnmanagedType.LPArray)]
-        byte[] rawBuf,
+        [In] byte[] rawBuf,
         nint rawLen,
-        [MarshalAs(UnmanagedType.LPArray)]
-        byte[] compBuf,
+        [Out] byte[] compBuf,
         OodleLZ_CompressionLevel level,
         IntPtr pOptions = 0,
         IntPtr dictionaryBase = 0,
@@ -151,13 +150,44 @@ public class OodleLZ
         nint scratchSize = 0
         );
 
-    [DllImport("oo2core_9_win64.dll", CallingConvention = CallingConvention.StdCall)]
-    public static extern nint OodleLZ_Decompress(
-        [MarshalAs(UnmanagedType.LPArray)]
-        byte[] compBuf,
-        nint compBufSize,
-        [MarshalAs(UnmanagedType.LPArray)]
+    public static nint OodleLZ_Compress(
+        OodleLZ_Compressor compressor,
         byte[] rawBuf,
+        nint rawLen,
+        byte[] compBuf,
+        OodleLZ_CompressionLevel level,
+        OodleLZ_CompressOptions? options = null,
+        IntPtr dictionaryBase = 0,
+        IntPtr lrm = 0,
+        IntPtr scratchMem = 0,
+        nint scratchSize = 0
+        )
+    {
+        IntPtr pOptions = IntPtr.Zero;
+        try
+        {
+            if (options != null)
+            {
+                pOptions = Marshal.AllocHGlobal(Marshal.SizeOf<OodleLZ_CompressOptions>());
+                Marshal.StructureToPtr(options, pOptions, false);
+            }
+            return _OodleLZ_Compress(compressor, rawBuf, rawLen, compBuf, level, pOptions, dictionaryBase, lrm, scratchMem, scratchSize);
+        }
+        finally
+        {
+            if (pOptions != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(pOptions);
+            }
+        }
+    }
+
+    [LibraryImport("oo2core_9_win64.dll", EntryPoint = "OodleLZ_Decompress")]
+    [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+    private static partial nint _OodleLZ_Decompress(
+        [In] byte[] compBuf,
+        nint compBufSize,
+        [Out] byte[] rawBuf,
         nint rawLen,
         OodleLZ_FuzzSafe fuzzSafe = OodleLZ_FuzzSafe.OodleLZ_FuzzSafe_Yes,
         OodleLZ_CheckCRC checkCRC = OodleLZ_CheckCRC.OodleLZ_CheckCRC_No,
@@ -171,23 +201,73 @@ public class OodleLZ
         OodleLZ_Decode_ThreadPhase threadPhase = OodleLZ_Decode_ThreadPhase.OodleLZ_Decode_Unthreaded
         );
 
-    [DllImport("oo2core_9_win64.dll", CallingConvention = CallingConvention.StdCall)]
-    public static extern IntPtr OodleLZ_CompressOptions_GetDefault(
+    public static nint OodleLZ_Decompress(
+        byte[] compBuf,
+        nint compBufSize,
+        byte[] rawBuf,
+        nint rawLen,
+        OodleLZ_FuzzSafe fuzzSafe = OodleLZ_FuzzSafe.OodleLZ_FuzzSafe_Yes,
+        OodleLZ_CheckCRC checkCRC = OodleLZ_CheckCRC.OodleLZ_CheckCRC_No,
+        OodleLZ_Verbosity verbosity = OodleLZ_Verbosity.OodleLZ_Verbosity_None,
+        IntPtr decBufBase = 0,
+        nint decBufSize = 0,
+        IntPtr fpCallback = 0,
+        IntPtr callbackUserData = 0,
+        IntPtr decoderMemory = 0,
+        nint decoderMemorySize = 0,
+        OodleLZ_Decode_ThreadPhase threadPhase = OodleLZ_Decode_ThreadPhase.OodleLZ_Decode_Unthreaded
+        )
+    {
+        return _OodleLZ_Decompress(compBuf, compBufSize, rawBuf, rawLen, fuzzSafe, checkCRC, verbosity, decBufBase, decBufSize, fpCallback, callbackUserData, decoderMemory, decoderMemorySize, threadPhase);
+    }
+
+    [LibraryImport("oo2core_9_win64.dll", EntryPoint = "OodleLZ_CompressOptions_GetDefault")]
+    [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+    private static partial IntPtr _OodleLZ_CompressOptions_GetDefault(
         OodleLZ_Compressor compressor = OodleLZ_Compressor.OodleLZ_Compressor_Invalid,
         OodleLZ_CompressionLevel lzLevel = OodleLZ_CompressionLevel.OodleLZ_CompressionLevel_Normal
         );
 
-    [DllImport("oo2core_9_win64.dll", CallingConvention = CallingConvention.StdCall)]
-    public static extern nint OodleLZ_GetCompressedBufferSizeNeeded(
+    public static OodleLZ_CompressOptions OodleLZ_CompressOptions_GetDefault(
+        OodleLZ_Compressor compressor = OodleLZ_Compressor.OodleLZ_Compressor_Invalid,
+        OodleLZ_CompressionLevel lzLevel = OodleLZ_CompressionLevel.OodleLZ_CompressionLevel_Normal
+        )
+    {
+        IntPtr pOptions = _OodleLZ_CompressOptions_GetDefault(compressor, lzLevel);
+        OodleLZ_CompressOptions options = Marshal.PtrToStructure<OodleLZ_CompressOptions>(pOptions);
+        return options;
+    }
+
+    [LibraryImport("oo2core_9_win64.dll", EntryPoint = "OodleLZ_GetCompressedBufferSizeNeeded")]
+    [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+    private static partial nint _OodleLZ_GetCompressedBufferSizeNeeded(
         OodleLZ_Compressor compressor,
         nint rawSize
         );
 
-    [DllImport("oo2core_9_win64.dll", CallingConvention = CallingConvention.StdCall)]
-    public static extern nint OodleLZ_GetDecodeBufferSize(
+    public static nint OodleLZ_GetCompressedBufferSizeNeeded(
+        OodleLZ_Compressor compressor,
+        nint rawSize
+        )
+    {
+        return _OodleLZ_GetCompressedBufferSizeNeeded(compressor, rawSize);
+    }
+
+    [LibraryImport("oo2core_9_win64.dll", EntryPoint = "OodleLZ_GetDecodeBufferSize")]
+    [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+    private static partial nint _OodleLZ_GetDecodeBufferSize(
         OodleLZ_Compressor compressor,
         nint rawSize,
         [MarshalAs(UnmanagedType.Bool)]
         bool corruptionPossible
         );
+
+    public static nint OodleLZ_GetDecodeBufferSize(
+        OodleLZ_Compressor compressor,
+        nint rawSize,
+        bool corruptionPossible
+        )
+    {
+        return _OodleLZ_GetDecodeBufferSize(compressor, rawSize, corruptionPossible);
+    }
 }
