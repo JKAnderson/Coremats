@@ -367,7 +367,7 @@ public static class DCX
             throw new NotImplementedException($"Unimplemented DCX KRAK permutation.");
 
         byte[] compressed = br.ReadBytes((int)compressedSize);
-        return Oodle26.Decompress(compressed, uncompressedSize);
+        return Oodle.Decompress(compressed, uncompressedSize);
     }
 
     private static byte[] DecompressDCXZSTD(BinaryReaderEx br, out Type type)
@@ -615,7 +615,7 @@ public static class DCX
     private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw, Type type)
     {
         byte level = (byte)(type == Type.DCX_KRAK_6 ? 6 : 9);
-        byte[] compressed = Oodle26.Compress(data, Oodle26.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, (Oodle26.OodleLZ_CompressionLevel)level);
+        byte[] compressed = Oodle.Compress(data, Noodle.Oodle2_9.OodleLZ.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, (Noodle.Oodle2_9.OodleLZ.OodleLZ_CompressionLevel)level);
 
         bw.WriteASCII("DCX\0");
         bw.WriteInt32(0x11000);
