@@ -1,6 +1,5 @@
 ﻿namespace Coremats;
-
-public partial class MSB_NR : SoulsFile<MSB_NR>
+public partial class MSB_NR : CompressibleFileFormat
 {
     public ModelParam Models { get; set; }
     public EventParam Events { get; set; }
@@ -8,6 +7,14 @@ public partial class MSB_NR : SoulsFile<MSB_NR>
     public RouteParam Routes { get; set; }
     public LayerParam Layers { get; set; }
     public PartsParam Parts { get; set; }
+
+    public static MSB_NR Read(string path) => ReadFile(path, br => new MSB_NR(br));
+    public static MSB_NR Read(byte[] bytes) => ReadBytes(bytes, br => new MSB_NR(br));
+
+    public void Write(string path) => WriteFile(path, Write);
+    public void Write(string path, DCX.Type compression) => WriteFile(path, Write, compression);
+    public void Write() => WriteBytes(Write);
+    public void Write(DCX.Type compression) => WriteBytes(Write, compression);
 
     public MSB_NR()
     {
@@ -19,10 +26,8 @@ public partial class MSB_NR : SoulsFile<MSB_NR>
         Parts = new();
     }
 
-    protected override void Read(BinaryReaderEx br)
+    private MSB_NR(BinaryReaderEx br)
     {
-        br.BigEndian = false;
-
         br.AssertASCII("MSB ");
         br.AssertInt32(1);
         br.AssertInt32(0x10);
@@ -43,7 +48,7 @@ public partial class MSB_NR : SoulsFile<MSB_NR>
         Parts.Postprocess(this);
     }
 
-    protected override void Write(BinaryWriterEx bw)
+    private void Write(BinaryWriterEx bw)
     {
         Models.PreprocessStage1();
         Events.PreprocessStage1();
@@ -54,8 +59,6 @@ public partial class MSB_NR : SoulsFile<MSB_NR>
         Events.PreprocessStage2(this);
         Points.PreprocessStage2(this);
         Parts.PreprocessStage2(this);
-
-        bw.BigEndian = false;
 
         bw.WriteASCII("MSB ");
         bw.WriteInt32(1);

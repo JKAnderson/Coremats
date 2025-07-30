@@ -4,20 +4,6 @@ namespace Coremats;
 
 internal static class SFUtil
 {
-    public static BinaryReaderEx GetDecompressedBR(BinaryReaderEx br, out DCX.Type compression)
-    {
-        if (DCX.Is(br))
-        {
-            byte[] bytes = DCX.Decompress(br, out compression);
-            return new BinaryReaderEx(false, bytes);
-        }
-        else
-        {
-            compression = DCX.Type.None;
-            return br;
-        }
-    }
-
     public static int WriteZlib(BinaryWriterEx bw, byte formatByte, byte[] input)
     {
         long start = bw.Position;

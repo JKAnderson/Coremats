@@ -1,5 +1,5 @@
 ﻿namespace Coremats;
-public class BHD5
+public class BHD5 : FileFormat
 {
     public enum Bhd5Format
     {
@@ -16,18 +16,8 @@ public class BHD5
     public string DataSalt { get; set; }
     public List<Bucket> Buckets { get; set; }
 
-    public static BHD5 Read(string path, Bhd5Format format)
-    {
-        using var fs = System.IO.File.OpenRead(path);
-        var br = new BinaryReaderEx(false, fs);
-        return new(br, format);
-    }
-
-    public static BHD5 Read(byte[] bytes, Bhd5Format format)
-    {
-        var br = new BinaryReaderEx(false, bytes);
-        return new(br, format);
-    }
+    public static BHD5 Read(string path, Bhd5Format format) => ReadFile(path, br => new BHD5(br, format));
+    public static BHD5 Read(byte[] bytes, Bhd5Format format) => ReadBytes(bytes, br => new BHD5(br, format));
 
     private BHD5(BinaryReaderEx br, Bhd5Format format)
     {
