@@ -18,7 +18,6 @@ public partial class MSB_NR
 
     public class EventParam : Param<Event>
     {
-        public override int Version => 75;
         public override string Name => "EVENT_PARAM_ST";
 
         public EventParam() : base() { }

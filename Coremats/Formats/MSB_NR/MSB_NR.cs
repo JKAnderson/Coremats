@@ -83,25 +83,24 @@ public partial class MSB_NR : CompressibleFileFormat
 
     public abstract class Param<T> where T : Entry
     {
-        public abstract int Version { get; }
+        public int Version { get; set; }
         public abstract string Name { get; }
         public List<T> Entries { get; set; }
 
         protected Param()
         {
+            Version = 78;
             Entries = [];
         }
 
         protected Param(BinaryReaderEx br, bool lastParam, Func<BinaryReaderEx, T> readEntry)
         {
-            int version = br.ReadInt32();
+            Version = br.AssertInt32(75, 78);
             int entryCount = br.ReadInt32() - 1;
             string name = br.GetUTF16(br.ReadInt64());
             long[] offsets = br.ReadInt64s(entryCount);
             long nextParamOffset = br.ReadInt64();
 
-            if (version != Version)
-                throw new InvalidDataException($"Unexpected param version: {version}");
             if (name != Name)
                 throw new InvalidDataException($"Unexpected param name: {name}");
             if (lastParam && nextParamOffset != 0)

@@ -10,7 +10,6 @@ public partial class MSB_NR
 
     public class RouteParam : Param<Route>
     {
-        public override int Version => 75;
         public override string Name => "ROUTE_PARAM_ST";
 
         public RouteParam() : base() { }

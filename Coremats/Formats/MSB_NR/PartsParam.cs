@@ -16,7 +16,6 @@ public partial class MSB_NR
 
     public class PartsParam : Param<Part>
     {
-        public override int Version => 75;
         public override string Name => "PARTS_PARAM_ST";
 
         public PartsParam() : base() { }

@@ -4,7 +4,6 @@ public partial class MSB_NR
 {
     public class LayerParam : Param<Model>
     {
-        public override int Version => 75;
         public override string Name => "LAYER_PARAM_ST";
 
         public LayerParam() : base() { }

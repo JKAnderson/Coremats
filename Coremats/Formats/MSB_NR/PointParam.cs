@@ -36,7 +36,6 @@ public partial class MSB_NR
 
     public class PointParam : Param<Point>
     {
-        public override int Version => 75;
         public override string Name => "POINT_PARAM_ST";
 
         public PointParam() : base() { }

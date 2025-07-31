@@ -15,7 +15,6 @@ public partial class MSB_NR
 
     public class ModelParam : Param<Model>
     {
-        public override int Version => 75;
         public override string Name => "MODEL_PARAM_ST";
 
         public ModelParam() : base() { }
