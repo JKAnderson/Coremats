@@ -78,7 +78,7 @@ public partial class MSB_NR : CompressibleFileFormat
 
     public abstract class Entry
     {
-        internal abstract void Write(BinaryWriterEx bw);
+        internal abstract void Write(BinaryWriterEx bw, int version);
     }
 
     public abstract class Param<T> where T : Entry
@@ -93,7 +93,7 @@ public partial class MSB_NR : CompressibleFileFormat
             Entries = [];
         }
 
-        protected Param(BinaryReaderEx br, bool lastParam, Func<BinaryReaderEx, T> readEntry)
+        protected Param(BinaryReaderEx br, bool lastParam, Func<BinaryReaderEx, int, T> readEntry)
         {
             Version = br.AssertInt32(75, 78);
             int entryCount = br.ReadInt32() - 1;
@@ -110,7 +110,7 @@ public partial class MSB_NR : CompressibleFileFormat
             for (int i = 0; i < entryCount; i++)
             {
                 br.Position = offsets[i];
-                Entries.Add(readEntry(br));
+                Entries.Add(readEntry(br, Version));
             }
 
             if (!lastParam)
@@ -133,7 +133,7 @@ public partial class MSB_NR : CompressibleFileFormat
             {
                 bw.Pad(8);
                 bw.FillInt64($"EntryOffset[{i}]", bw.Position);
-                Entries[i].Write(bw);
+                Entries[i].Write(bw, Version);
             }
 
             bw.Pad(8);

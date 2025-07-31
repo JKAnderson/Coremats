@@ -14,7 +14,7 @@ public partial class MSB_NR
 
         public RouteParam() : base() { }
 
-        internal RouteParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, br => new(br)) { }
+        internal RouteParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void PreprocessStage1()
         {
@@ -41,7 +41,7 @@ public partial class MSB_NR
             Name = "";
         }
 
-        internal Route(BinaryReaderEx br)
+        internal Route(BinaryReaderEx br, int version)
         {
             long start = br.Position;
 
@@ -78,7 +78,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             long start = bw.Position;
 

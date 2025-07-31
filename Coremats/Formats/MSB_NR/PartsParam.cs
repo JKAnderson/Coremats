@@ -20,7 +20,7 @@ public partial class MSB_NR
 
         public PartsParam() : base() { }
 
-        internal PartsParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, br => new(br)) { }
+        internal PartsParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void Postprocess(MSB_NR msb)
         {
@@ -102,7 +102,7 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal Part(BinaryReaderEx br)
+        internal Part(BinaryReaderEx br, int version)
         {
             long start = br.Position;
 
@@ -214,7 +214,7 @@ public partial class MSB_NR
             TypeData?.Reindex(msb);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             long start = bw.Position;
 
@@ -859,6 +859,7 @@ public partial class MSB_NR
         public int Unk34 { get; set; }
         public int Unk38 { get; set; }
         public sbyte Unk3c { get; set; }
+        public short Unk3e { get; set; }
         public int Unk40 { get; set; }
         public int Unk44 { get; set; }
         public int Unk48 { get; set; }
@@ -871,6 +872,7 @@ public partial class MSB_NR
             Unk22 = -1;
             Unk38 = -1;
             Unk3c = -1;
+            Unk3e = -1;
             Struct78 = new();
         }
 
@@ -905,7 +907,7 @@ public partial class MSB_NR
             Unk38 = br.ReadInt32();
             Unk3c = br.ReadSByte();
             br.AssertByte(0);
-            br.AssertInt16(0);
+            Unk3e = br.ReadInt16();
             Unk40 = br.ReadInt32();
             Unk44 = br.ReadInt32();
             Unk48 = br.ReadInt32();
@@ -965,7 +967,7 @@ public partial class MSB_NR
             bw.WriteInt32(Unk38);
             bw.WriteSByte(Unk3c);
             bw.WriteByte(0);
-            bw.WriteInt16(0);
+            bw.WriteInt16(Unk3e);
             bw.WriteInt32(Unk40);
             bw.WriteInt32(Unk44);
             bw.WriteInt32(Unk48);

@@ -22,7 +22,7 @@ public partial class MSB_NR
 
         public EventParam() : base() { }
 
-        internal EventParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, br => new(br)) { }
+        internal EventParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void Postprocess(MSB_NR msb)
         {
@@ -64,7 +64,7 @@ public partial class MSB_NR
             Struct28 = new();
         }
 
-        internal Event(BinaryReaderEx br)
+        internal Event(BinaryReaderEx br, int version)
         {
             long start = br.Position;
 
@@ -93,7 +93,7 @@ public partial class MSB_NR
                     EventType.Riding => new EventRidingData(br),
                     EventType.BirdRoute => new EventBirdRouteData(br),
                     EventType.TalkInfo => new EventTalkInfoData(br),
-                    EventType.TeamFight => new EventTeamFightData(br),
+                    EventType.TeamFight => new EventTeamFightData(br, version),
                     _ => throw new NotImplementedException(),
                 };
             }
@@ -114,7 +114,7 @@ public partial class MSB_NR
             TypeData?.Reindex(msb);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             long start = bw.Position;
 
@@ -135,7 +135,7 @@ public partial class MSB_NR
             Common.Write(bw);
 
             bw.FillInt64("EventTypeOffset", TypeData == null ? 0 : bw.Position - start);
-            TypeData?.Write(bw);
+            TypeData?.Write(bw, version);
 
             bw.FillInt64("EventOffset28", bw.Position - start);
             Struct28.Write(bw);
@@ -229,7 +229,7 @@ public partial class MSB_NR
     {
         internal virtual void Deindex(MSB_NR msb) { }
         internal virtual void Reindex(MSB_NR msb) { }
-        internal abstract void Write(BinaryWriterEx bw);
+        internal abstract void Write(BinaryWriterEx bw, int version);
     }
 
     public class EventTreasureData : EventTypeData
@@ -237,15 +237,23 @@ public partial class MSB_NR
         private int _partIndex;
         public Part Part { get; set; }
         public int ItemLotParamId { get; set; }
+        public int Unk38 { get; set; }
         public byte Unk40 { get; set; }
         public bool Unk41 { get; set; }
+        public bool Unk42 { get; set; }
+        public bool Unk43 { get; set; }
         public int Unk44 { get; set; }
+        public short Unk48 { get; set; }
+        public short Unk4a { get; set; }
 
         public EventTreasureData()
         {
             ItemLotParamId = -1;
+            Unk38 = -1;
             Unk40 = 1;
+            Unk43 = true;
             Unk44 = -1;
+            Unk48 = -1;
         }
 
         internal EventTreasureData(BinaryReaderEx br)
@@ -264,13 +272,15 @@ public partial class MSB_NR
             br.AssertInt32(-1);
             br.AssertInt32(-1);
             br.AssertInt32(-1);
-            br.AssertInt32(0);
+            Unk38 = br.ReadInt32();
             br.AssertInt32(-1);
             Unk40 = br.ReadByte();
             Unk41 = br.ReadBoolean();
-            br.AssertInt16(0);
+            Unk42 = br.ReadBoolean();
+            Unk43 = br.ReadBoolean();
             Unk44 = br.ReadInt32();
-            br.AssertInt32(0);
+            Unk48 = br.ReadInt16();
+            Unk4a = br.ReadInt16();
             br.AssertInt32(0);
         }
 
@@ -284,7 +294,7 @@ public partial class MSB_NR
             _partIndex = FindIndex(msb.Parts.Entries, Part);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -300,13 +310,15 @@ public partial class MSB_NR
             bw.WriteInt32(-1);
             bw.WriteInt32(-1);
             bw.WriteInt32(-1);
-            bw.WriteInt32(0);
+            bw.WriteInt32(Unk38);
             bw.WriteInt32(-1);
             bw.WriteByte(Unk40);
             bw.WriteBoolean(Unk41);
-            bw.WriteInt16(0);
+            bw.WriteBoolean(Unk42);
+            bw.WriteBoolean(Unk43);
             bw.WriteInt32(Unk44);
-            bw.WriteInt32(0);
+            bw.WriteInt16(Unk48);
+            bw.WriteInt16(Unk4a);
             bw.WriteInt32(0);
         }
     }
@@ -386,7 +398,7 @@ public partial class MSB_NR
             _partIndices = FindIndices(msb.Parts.Entries, Parts);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteByte(MaxNum);
             bw.WriteByte(GenType);
@@ -430,10 +442,12 @@ public partial class MSB_NR
         public int ObjActParamId { get; set; }
         public int Unk0c { get; set; }
         public uint EventFlagId { get; set; }
+        public int Unk14 { get; set; }
 
         public EventObjActData()
         {
             Unk0c = 5;
+            Unk14 = -1;
         }
 
         internal EventObjActData(BinaryReaderEx br)
@@ -443,7 +457,7 @@ public partial class MSB_NR
             ObjActParamId = br.ReadInt32();
             Unk0c = br.ReadInt32();
             EventFlagId = br.ReadUInt32();
-            br.AssertInt32(0);
+            Unk14 = br.ReadInt32();
             br.AssertInt32(0);
             br.AssertInt32(0);
         }
@@ -458,14 +472,14 @@ public partial class MSB_NR
             _partIndex = FindIndex(msb.Parts.Entries, Part);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteUInt32(EntityId);
             bw.WriteInt32(_partIndex);
             bw.WriteInt32(ObjActParamId);
             bw.WriteInt32(Unk0c);
             bw.WriteUInt32(EventFlagId);
-            bw.WriteInt32(0);
+            bw.WriteInt32(Unk14);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
         }
@@ -505,7 +519,7 @@ public partial class MSB_NR
             _partIndices = FindIndices(msb.Parts.Entries, Parts);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteInt32(Unk00);
             bw.WriteBoolean(Unk04);
@@ -550,7 +564,7 @@ public partial class MSB_NR
             _pointIndices = FindIndicesShort(msb.Points.Entries, Points);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteByte(Unk00);
             bw.WriteByte(0);
@@ -590,7 +604,7 @@ public partial class MSB_NR
             _partIndex1 = FindIndex(msb.Parts.Entries, Part1);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteInt32(_partIndex0);
             bw.WriteInt32(_partIndex1);
@@ -629,7 +643,7 @@ public partial class MSB_NR
             _pointIndices = FindIndicesShort(msb.Points.Entries, Points);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(Unk04);
@@ -694,7 +708,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(Unk04);
@@ -739,26 +753,32 @@ public partial class MSB_NR
         public int Unk04 { get; set; }
         public int Unk08 { get; set; }
         public int Unk0c { get; set; }
+        public int Unk10 { get; set; }
 
         public EventTeamFightData()
         {
             Unk08 = -1;
+            Unk10 = -1;
         }
 
-        internal EventTeamFightData(BinaryReaderEx br)
+        internal EventTeamFightData(BinaryReaderEx br, int version)
         {
             Unk00 = br.ReadInt32();
             Unk04 = br.ReadInt32();
             Unk08 = br.ReadInt32();
             Unk0c = br.ReadInt32();
+            if (version >= 78)
+                Unk10 = br.ReadInt32();
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(Unk04);
             bw.WriteInt32(Unk08);
             bw.WriteInt32(Unk0c);
+            if (version >= 78)
+                bw.WriteInt32(Unk10);
         }
     }
 }

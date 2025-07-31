@@ -40,7 +40,7 @@ public partial class MSB_NR
 
         public PointParam() : base() { }
 
-        internal PointParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, br => new(br)) { }
+        internal PointParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void Postprocess(MSB_NR msb)
         {
@@ -92,7 +92,7 @@ public partial class MSB_NR
             Struct98 = new();
         }
 
-        internal Point(BinaryReaderEx br)
+        internal Point(BinaryReaderEx br, int version)
         {
             long start = br.Position;
 
@@ -185,7 +185,7 @@ public partial class MSB_NR
             TypeData?.Reindex(msb);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BinaryWriterEx bw, int version)
         {
             long start = bw.Position;
 
