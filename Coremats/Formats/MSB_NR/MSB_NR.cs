@@ -13,8 +13,8 @@ public partial class MSB_NR : CompressibleFileFormat
 
     public void Write(string path) => WriteFile(path, Write);
     public void Write(string path, DCX.Type compression) => WriteFile(path, Write, compression);
-    public void Write() => WriteBytes(Write);
-    public void Write(DCX.Type compression) => WriteBytes(Write, compression);
+    public byte[] Write() => WriteBytes(Write);
+    public byte[] Write(DCX.Type compression) => WriteBytes(Write, compression);
 
     public MSB_NR()
     {
