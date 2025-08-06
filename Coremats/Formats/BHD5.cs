@@ -16,8 +16,19 @@ public class BHD5 : FileFormat
     public string DataSalt { get; set; }
     public List<Bucket> Buckets { get; set; }
 
+    public static bool Is(string path) => IsFile(path, Is);
+    public static bool Is(byte[] bytes) => IsBytes(bytes, Is);
+
     public static BHD5 Read(string path, Bhd5Format format) => ReadFile(path, br => new BHD5(br, format));
     public static BHD5 Read(byte[] bytes, Bhd5Format format) => ReadBytes(bytes, br => new BHD5(br, format));
+
+    private static bool Is(BinaryReaderEx br)
+    {
+        if (br.Length < 4)
+            return false;
+
+        return br.ReadASCII(4) == "BHD5";
+    }
 
     private BHD5(BinaryReaderEx br, Bhd5Format format)
     {

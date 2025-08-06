@@ -1,6 +1,19 @@
 ﻿namespace Coremats;
 public abstract class FileFormat
 {
+    protected static bool IsFile(string path, Func<BinaryReaderEx, bool> is_)
+    {
+        using var fs = File.OpenRead(path);
+        var br = new BinaryReaderEx(false, fs);
+        return is_(br);
+    }
+
+    protected static bool IsBytes(byte[] bytes, Func<BinaryReaderEx, bool> is_)
+    {
+        var br = new BinaryReaderEx(false, bytes);
+        return is_(br);
+    }
+
     protected static T ReadFile<T>(string path, Func<BinaryReaderEx, T> read)
     {
         using var fs = File.OpenRead(path);
