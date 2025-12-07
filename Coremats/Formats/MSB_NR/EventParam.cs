@@ -663,7 +663,8 @@ public partial class MSB_NR
         public int Unk28 { get; set; }
         public int Unk2c { get; set; }
         public byte Unk44 { get; set; }
-        public bool Unk45 { get; set; }
+        public byte Unk45 { get; set; }
+        public short Unk46 { get; set; }
 
         public EventTalkInfoData()
         {
@@ -690,8 +691,8 @@ public partial class MSB_NR
             br.AssertInt32(0);
             br.AssertInt32(0);
             Unk44 = br.ReadByte();
-            Unk45 = br.ReadBoolean();
-            br.AssertInt16(0);
+            Unk45 = br.ReadByte();
+            Unk46 = br.ReadInt16();
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -728,8 +729,8 @@ public partial class MSB_NR
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteByte(Unk44);
-            bw.WriteBoolean(Unk45);
-            bw.WriteInt16(0);
+            bw.WriteByte(Unk45);
+            bw.WriteInt16(Unk46);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -754,11 +755,17 @@ public partial class MSB_NR
         public int Unk08 { get; set; }
         public int Unk0c { get; set; }
         public int Unk10 { get; set; }
+        public int Unk14 { get; set; }
+        public int Unk18 { get; set; }
+        public int Unk1c { get; set; }
+        public int Unk20 { get; set; }
 
         public EventTeamFightData()
         {
             Unk08 = -1;
             Unk10 = -1;
+            Unk18 = -1;
+            Unk20 = -1;
         }
 
         internal EventTeamFightData(BinaryReaderEx br, int version)
@@ -768,7 +775,16 @@ public partial class MSB_NR
             Unk08 = br.ReadInt32();
             Unk0c = br.ReadInt32();
             if (version >= 78)
+            {
                 Unk10 = br.ReadInt32();
+            }
+            if (version >= 80)
+            {
+                Unk14 = br.ReadInt32();
+                Unk18 = br.ReadInt32();
+                Unk1c = br.ReadInt32();
+                Unk20 = br.ReadInt32();
+            }
         }
 
         internal override void Write(BinaryWriterEx bw, int version)
@@ -778,7 +794,16 @@ public partial class MSB_NR
             bw.WriteInt32(Unk08);
             bw.WriteInt32(Unk0c);
             if (version >= 78)
+            {
                 bw.WriteInt32(Unk10);
+            }
+            if (version >= 80)
+            {
+                bw.WriteInt32(Unk14);
+                bw.WriteInt32(Unk18);
+                bw.WriteInt32(Unk1c);
+                bw.WriteInt32(Unk20);
+            }
         }
     }
 }

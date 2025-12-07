@@ -95,7 +95,7 @@ public partial class MSB_NR : CompressibleFileFormat
 
         protected Param(BinaryReaderEx br, bool lastParam, Func<BinaryReaderEx, int, T> readEntry)
         {
-            Version = br.AssertInt32(75, 78);
+            Version = br.AssertInt32(75, 78, 79, 80);
             int entryCount = br.ReadInt32() - 1;
             string name = br.GetUTF16(br.ReadInt64());
             long[] offsets = br.ReadInt64s(entryCount);

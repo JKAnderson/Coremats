@@ -31,6 +31,7 @@ public partial class MSB_NR
         RespawnOverride = 57,
         UserEdgeRemovalInner = 58,
         UserEdgeRemovalOuter = 59,
+        BigJumpSealable = 60,
         Other = ~0u,
     }
 
@@ -159,6 +160,7 @@ public partial class MSB_NR
                     PointType.RespawnOverride => new PointRespawnOverrideData(br),
                     PointType.UserEdgeRemovalInner => new PointUserEdgeRemovalInnerData(br),
                     PointType.UserEdgeRemovalOuter => new PointUserEdgeRemovalOuterData(br),
+                    PointType.BigJumpSealable => new PointBigJumpSealableData(br),
                     _ => throw new NotImplementedException(),
                 };
             }
@@ -246,6 +248,7 @@ public partial class MSB_NR
         public Part Part { get; set; }
         public uint EntityId { get; set; }
         public sbyte Unk08 { get; set; }
+        public int Unk0c { get; set; }
         public int Variation { get; set; }
 
         public PointCommon()
@@ -261,7 +264,7 @@ public partial class MSB_NR
             Unk08 = br.ReadSByte();
             br.AssertByte(0);
             br.AssertInt16(0);
-            br.AssertInt32(0);
+            Unk0c = br.ReadInt32();
             Variation = br.ReadInt32();
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -285,7 +288,7 @@ public partial class MSB_NR
             bw.WriteSByte(Unk08);
             bw.WriteByte(0);
             bw.WriteInt16(0);
-            bw.WriteInt32(0);
+            bw.WriteInt32(Unk0c);
             bw.WriteInt32(Variation);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -551,6 +554,7 @@ public partial class MSB_NR
 
     public class PointEnvMapEffectBoxData : PointTypeData
     {
+        public float Unk00 { get; set; }
         public float Unk04 { get; set; }
         public bool Unk08 { get; set; }
         public short Unk0a { get; set; }
@@ -573,7 +577,7 @@ public partial class MSB_NR
 
         internal PointEnvMapEffectBoxData(BinaryReaderEx br)
         {
-            br.AssertSingle(0);
+            Unk00 = br.ReadSingle();
             Unk04 = br.ReadSingle();
             Unk08 = br.ReadBoolean();
             br.AssertByte(10);
@@ -599,7 +603,7 @@ public partial class MSB_NR
 
         internal override void Write(BinaryWriterEx bw)
         {
-            bw.WriteSingle(0);
+            bw.WriteSingle(Unk00);
             bw.WriteSingle(Unk04);
             bw.WriteBoolean(Unk08);
             bw.WriteByte(10);
@@ -1139,6 +1143,45 @@ public partial class MSB_NR
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
+        }
+    }
+
+    public class PointBigJumpSealableData : PointTypeData
+    {
+        public float Unk00 { get; set; }
+        public int Unk04 { get; set; }
+        public int Unk08 { get; set; }
+        public int Unk0c { get; set; }
+        public int Unk10 { get; set; }
+        public int Unk14 { get; set; }
+
+        public PointBigJumpSealableData()
+        {
+            Unk00 = 20;
+            Unk04 = 807103;
+            Unk0c = -1;
+            Unk10 = 200;
+            Unk14 = -1;
+        }
+
+        internal PointBigJumpSealableData(BinaryReaderEx br)
+        {
+            Unk00 = br.ReadSingle();
+            Unk04 = br.ReadInt32();
+            Unk08 = br.ReadInt32();
+            Unk0c = br.ReadInt32();
+            Unk10 = br.ReadInt32();
+            Unk14 = br.ReadInt32();
+        }
+
+        internal override void Write(BinaryWriterEx bw)
+        {
+            bw.WriteSingle(Unk00);
+            bw.WriteInt32(Unk04);
+            bw.WriteInt32(Unk08);
+            bw.WriteInt32(Unk0c);
+            bw.WriteInt32(Unk10);
+            bw.WriteInt32(Unk14);
         }
     }
 }

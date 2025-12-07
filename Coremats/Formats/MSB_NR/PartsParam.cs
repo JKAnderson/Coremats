@@ -645,13 +645,15 @@ public partial class MSB_NR
 
     public class PartStruct88
     {
+        public int Unk00 { get; set; }
+
         public PartStruct88() { }
 
         public PartStruct88 DeepClone() => (PartStruct88)MemberwiseClone();
 
         internal PartStruct88(BinaryReaderEx br)
         {
-            br.AssertInt32(0);
+            Unk00 = br.ReadInt32();
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -663,7 +665,7 @@ public partial class MSB_NR
 
         internal void Write(BinaryWriterEx bw)
         {
-            bw.WriteInt32(0);
+            bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -864,6 +866,11 @@ public partial class MSB_NR
         public int Unk44 { get; set; }
         public int Unk48 { get; set; }
         public int Unk4c { get; set; }
+        public int Unk50 { get; set; }
+        public int Unk54 { get; set; }
+        public int Unk58 { get; set; }
+        public int Unk5c { get; set; }
+        public int Unk60 { get; set; }
         public PartEneStruct78 Struct78 { get; set; }
 
         public PartEneData()
@@ -873,6 +880,8 @@ public partial class MSB_NR
             Unk38 = -1;
             Unk3c = -1;
             Unk3e = -1;
+            Unk54 = -1;
+            Unk5c = -1;
             Struct78 = new();
         }
 
@@ -912,11 +921,11 @@ public partial class MSB_NR
             Unk44 = br.ReadInt32();
             Unk48 = br.ReadInt32();
             Unk4c = br.ReadInt32();
-            br.AssertInt32(0);
-            br.AssertInt32(0);
-            br.AssertInt32(0);
-            br.AssertInt32(0);
-            br.AssertInt32(0);
+            Unk50 = br.ReadInt32();
+            Unk54 = br.ReadInt32();
+            Unk58 = br.ReadInt32();
+            Unk5c = br.ReadInt32();
+            Unk60 = br.ReadInt32();
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -972,11 +981,11 @@ public partial class MSB_NR
             bw.WriteInt32(Unk44);
             bw.WriteInt32(Unk48);
             bw.WriteInt32(Unk4c);
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
-            bw.WriteInt32(0);
+            bw.WriteInt32(Unk50);
+            bw.WriteInt32(Unk54);
+            bw.WriteInt32(Unk58);
+            bw.WriteInt32(Unk5c);
+            bw.WriteInt32(Unk60);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -1054,6 +1063,7 @@ public partial class MSB_NR
     {
         public byte Unk00 { get; set; }
         public sbyte Unk02 { get; set; }
+        public bool Unk03 { get; set; }
         public float Unk04 { get; set; }
         public int Unk18 { get; set; }
         public int Unk1c { get; set; }
@@ -1077,7 +1087,7 @@ public partial class MSB_NR
             Unk00 = br.ReadByte();
             br.AssertSByte(-1);
             Unk02 = br.ReadSByte();
-            br.AssertByte(0);
+            Unk03 = br.ReadBoolean();
             Unk04 = br.ReadSingle();
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -1110,7 +1120,7 @@ public partial class MSB_NR
             bw.WriteByte(Unk00);
             bw.WriteSByte(-1);
             bw.WriteSByte(Unk02);
-            bw.WriteByte(0);
+            bw.WriteBoolean(Unk03);
             bw.WriteSingle(Unk04);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -1175,6 +1185,7 @@ public partial class MSB_NR
         public sbyte[] MapId { get; private set; }
         public sbyte Unk0a { get; set; }
         public bool Unk0b { get; set; }
+        public int Unk0c { get; set; }
 
         public PartConnectHitData()
         {
@@ -1196,7 +1207,7 @@ public partial class MSB_NR
             br.AssertInt16(0);
             Unk0a = br.ReadSByte();
             Unk0b = br.ReadBoolean();
-            br.AssertInt32(0);
+            Unk0c = br.ReadInt32();
         }
 
         internal override void Deindex(MSB_NR msb)
@@ -1218,7 +1229,7 @@ public partial class MSB_NR
             bw.WriteInt16(0);
             bw.WriteSByte(Unk0a);
             bw.WriteBoolean(Unk0b);
-            bw.WriteInt32(0);
+            bw.WriteInt32(Unk0c);
         }
     }
 
@@ -1235,6 +1246,8 @@ public partial class MSB_NR
         public int Unk34 { get; set; }
         private int _partIndex38;
         public Part Part38 { get; set; }
+        private int _partIndex3c;
+        public Part Part3c { get; set; }
         private int _partIndex40;
         public Part Part40 { get; set; }
         private int _partIndex44;
@@ -1299,7 +1312,7 @@ public partial class MSB_NR
             br.AssertInt32(-1);
             Unk34 = br.ReadInt32();
             _partIndex38 = br.ReadInt32();
-            br.AssertInt32(-1);
+            _partIndex3c = br.ReadInt32();
             _partIndex40 = br.ReadInt32();
             _partIndex44 = br.ReadInt32();
             _partIndex48 = br.ReadInt32();
@@ -1331,6 +1344,7 @@ public partial class MSB_NR
         internal override void Deindex(MSB_NR msb)
         {
             Part38 = FindEntry(msb.Parts.Entries, _partIndex38);
+            Part3c = FindEntry(msb.Parts.Entries, _partIndex3c);
             Part40 = FindEntry(msb.Parts.Entries, _partIndex40);
             Part44 = FindEntry(msb.Parts.Entries, _partIndex44);
             Part48 = FindEntry(msb.Parts.Entries, _partIndex48);
@@ -1341,6 +1355,7 @@ public partial class MSB_NR
         internal override void Reindex(MSB_NR msb)
         {
             _partIndex38 = FindIndex(msb.Parts.Entries, Part38);
+            _partIndex3c = FindIndex(msb.Parts.Entries, Part3c);
             _partIndex40 = FindIndex(msb.Parts.Entries, Part40);
             _partIndex44 = FindIndex(msb.Parts.Entries, Part44);
             _partIndex48 = FindIndex(msb.Parts.Entries, Part48);
@@ -1373,7 +1388,7 @@ public partial class MSB_NR
             bw.WriteInt32(-1);
             bw.WriteInt32(Unk34);
             bw.WriteInt32(_partIndex38);
-            bw.WriteInt32(-1);
+            bw.WriteInt32(_partIndex3c);
             bw.WriteInt32(_partIndex40);
             bw.WriteInt32(_partIndex44);
             bw.WriteInt32(_partIndex48);
@@ -1460,11 +1475,13 @@ public partial class MSB_NR
     public class PartGeomStruct70
     {
         public int Unk04 { get; set; }
+        public float Unk14 { get; set; }
         public sbyte Unk1c { get; set; }
 
         public PartGeomStruct70()
         {
             Unk04 = -1;
+            Unk14 = -1;
             Unk1c = -1;
         }
 
@@ -1477,7 +1494,7 @@ public partial class MSB_NR
             br.AssertInt32(-1);
             br.AssertInt32(0);
             br.AssertInt32(0);
-            br.AssertSingle(-1);
+            Unk14 = br.ReadSingle();
             br.AssertInt32(0);
             Unk1c = br.ReadSByte();
             br.AssertSByte(-1);
@@ -1499,7 +1516,7 @@ public partial class MSB_NR
             bw.WriteInt32(-1);
             bw.WriteInt32(0);
             bw.WriteInt32(0);
-            bw.WriteSingle(-1);
+            bw.WriteSingle(Unk14);
             bw.WriteInt32(0);
             bw.WriteSByte(Unk1c);
             bw.WriteSByte(-1);
