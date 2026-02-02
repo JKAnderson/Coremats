@@ -386,7 +386,7 @@ public static class DCX
         br.AssertASCII("DCP\0");
         br.AssertASCII("ZSTD");
         br.AssertInt32(0x20);
-        br.AssertByte(21);
+        byte level = br.AssertByte(21, 22);
         br.AssertByte(0);
         br.AssertByte(0);
         br.AssertByte(0);
@@ -398,7 +398,13 @@ public static class DCX
         br.AssertASCII("DCA\0");
         br.AssertInt32(8);
 
-        type = Type.DCX_ZSTD;
+        if (level == 21)
+            type = Type.DCX_ZSTD_21;
+        else if (level == 22)
+            type = Type.DCX_ZSTD_22;
+        else
+            throw new NotImplementedException($"Unimplemented DCX ZSTD permutation.");
+
         byte[] compressed = br.ReadBytes((int)compressedSize);
         var decompressor = new ZstdSharp.Decompressor();
         return decompressor.Unwrap(compressed).ToArray();
@@ -447,8 +453,9 @@ public static class DCX
         else if (type == Type.DCX_KRAK_6
             || type == Type.DCX_KRAK_9)
             CompressDCXKRAK(data, bw, type);
-        else if (type == Type.DCX_ZSTD)
-            CompressDCXZSTD(data, bw);
+        else if (type == Type.DCX_ZSTD_21
+            || type == Type.DCX_ZSTD_22)
+            CompressDCXZSTD(data, bw, type);
         else if (type == Type.Unknown)
             throw new ArgumentException("You cannot compress a DCX with an unknown type.");
         else
@@ -647,9 +654,10 @@ public static class DCX
         bw.Pad(0x10);
     }
 
-    private static void CompressDCXZSTD(byte[] data, BinaryWriterEx bw)
+    private static void CompressDCXZSTD(byte[] data, BinaryWriterEx bw, Type type)
     {
-        var compressor = new ZstdSharp.Compressor(21);
+        byte level = (byte)(type == Type.DCX_ZSTD_21 ? 21 : 22);
+        var compressor = new ZstdSharp.Compressor(level);
         compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_contentSizeFlag, 0);
         compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_windowLog, 16);
         byte[] compressed = compressor.Wrap(data).ToArray();
@@ -668,7 +676,7 @@ public static class DCX
         bw.WriteASCII("DCP\0");
         bw.WriteASCII("ZSTD");
         bw.WriteInt32(0x20);
-        bw.WriteByte(21);
+        bw.WriteByte(level);
         bw.WriteByte(0);
         bw.WriteByte(0);
         bw.WriteByte(0);
@@ -757,7 +765,12 @@ public static class DCX
         /// <summary>
         /// DCX header, Zstandard compression. Used in Elden Ring since DLC release.
         /// </summary>
-        DCX_ZSTD,
+        DCX_ZSTD_21,
+
+        /// <summary>
+        /// DCX header, Zstandard compression. Used in Nightreign DLC.
+        /// </summary>
+        DCX_ZSTD_22,
     }
 
     /// <summary>
