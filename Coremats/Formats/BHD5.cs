@@ -1,4 +1,5 @@
 ﻿namespace Coremats;
+
 public class BHD5 : FileFormat
 {
     public enum Bhd5Format
@@ -22,19 +23,19 @@ public class BHD5 : FileFormat
     public static BHD5 Read(string path, Bhd5Format format) => ReadFile(path, br => new BHD5(br, format));
     public static BHD5 Read(byte[] bytes, Bhd5Format format) => ReadBytes(bytes, br => new BHD5(br, format));
 
-    private static bool Is(BinaryReaderEx br)
+    private static bool Is(BexReader br)
     {
         if (br.Length < 4)
             return false;
 
-        return br.ReadASCII(4) == "BHD5";
+        return br.ReadAscii(4) == "BHD5";
     }
 
-    private BHD5(BinaryReaderEx br, Bhd5Format format)
+    private BHD5(BexReader br, Bhd5Format format)
     {
         Format = format;
 
-        br.AssertASCII("BHD5");
+        br.AssertAscii("BHD5");
         LittleEndian = br.AssertSByte(0, -1) != 0;
         br.BigEndian = !LittleEndian;
         Unk05 = br.ReadBoolean();
@@ -58,7 +59,7 @@ public class BHD5 : FileFormat
         if (format >= Bhd5Format.DarkSouls2)
         {
             int saltLength = br.ReadInt32();
-            DataSalt = br.ReadASCII(saltLength);
+            DataSalt = br.ReadAscii(saltLength);
         }
 
         br.Position = bucketsOffset;
@@ -69,7 +70,7 @@ public class BHD5 : FileFormat
 
     public class Bucket : List<File>
     {
-        internal Bucket(BinaryReaderEx br, Bhd5Format format)
+        internal Bucket(BexReader br, Bhd5Format format)
         {
             int fileCount = br.ReadInt32();
             long filesOffset;
@@ -84,12 +85,12 @@ public class BHD5 : FileFormat
             }
 
             Capacity = fileCount;
-            br.StepIn(filesOffset);
+            br.JumpIn(filesOffset);
             {
                 for (int i = 0; i < fileCount; i++)
                     Add(new(br, format));
             }
-            br.StepOut();
+            br.JumpOut();
         }
     }
 
@@ -102,7 +103,7 @@ public class BHD5 : FileFormat
         public FileHash Hash { get; set; }
         public FileEncryption Encryption { get; set; }
 
-        internal File(BinaryReaderEx br, Bhd5Format format)
+        internal File(BexReader br, Bhd5Format format)
         {
             long hashOffset = 0, encryptionOffset = 0;
             if (format >= Bhd5Format.EldenRing)
@@ -133,16 +134,16 @@ public class BHD5 : FileFormat
 
             if (hashOffset != 0)
             {
-                br.StepIn(hashOffset);
+                br.JumpIn(hashOffset);
                 Hash = new(br);
-                br.StepOut();
+                br.JumpOut();
             }
 
             if (encryptionOffset != 0)
             {
-                br.StepIn(encryptionOffset);
+                br.JumpIn(encryptionOffset);
                 Encryption = new(br);
-                br.StepOut();
+                br.JumpOut();
             }
         }
     }
@@ -152,7 +153,7 @@ public class BHD5 : FileFormat
         public byte[] Hash { get; }
         public List<Range> Ranges { get; set; }
 
-        internal FileHash(BinaryReaderEx br)
+        internal FileHash(BexReader br)
         {
             Hash = br.ReadBytes(32);
             int rangeCount = br.ReadInt32();
@@ -168,7 +169,7 @@ public class BHD5 : FileFormat
         public byte[] Key { get; }
         public List<Range> Ranges { get; set; }
 
-        internal FileEncryption(BinaryReaderEx br)
+        internal FileEncryption(BexReader br)
         {
             Key = br.ReadBytes(16);
             int rangeCount = br.ReadInt32();
@@ -184,7 +185,7 @@ public class BHD5 : FileFormat
         public long Start { get; set; }
         public long End { get; set; }
 
-        internal Range(BinaryReaderEx br)
+        internal Range(BexReader br)
         {
             Start = br.ReadInt64();
             End = br.ReadInt64();

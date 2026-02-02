@@ -4,7 +4,7 @@ namespace Coremats;
 
 internal static class SFUtil
 {
-    public static int WriteZlib(BinaryWriterEx bw, byte formatByte, byte[] input)
+    public static int WriteZlib(BexWriter bw, byte formatByte, byte[] input)
     {
         long start = bw.Position;
         bw.WriteByte(0x78);
@@ -19,7 +19,7 @@ internal static class SFUtil
         return (int)(bw.Position - start);
     }
 
-    public static byte[] ReadZlib(BinaryReaderEx br, int compressedSize)
+    public static byte[] ReadZlib(BexReader br, int compressedSize)
     {
         br.AssertByte(0x78);
         br.AssertByte(0x01, 0x5E, 0x9C, 0xDA);

@@ -20,7 +20,7 @@ public partial class MSB_NR
 
         public PartsParam() : base() { }
 
-        internal PartsParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
+        internal PartsParam(BexReader br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void Postprocess(MSB_NR msb)
         {
@@ -102,16 +102,16 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal Part(BinaryReaderEx br, int version)
+        internal Part(BexReader br, int version)
         {
             long start = br.Position;
 
-            Name = br.GetUTF16(start + br.ReadInt64());
+            Name = br.PeekUtf16(start + br.ReadInt64());
             PartNo = br.ReadInt32();
             Type = br.ReadEnum32<PartType>();
             _typeIndex = br.ReadInt32();
             _modelIndex = br.ReadInt32();
-            File = br.GetUTF16(start + br.ReadInt64());
+            File = br.PeekUtf16(start + br.ReadInt64());
             Position = br.ReadVector3();
             Angle = br.ReadVector3();
             Scale = br.ReadVector3();
@@ -214,7 +214,7 @@ public partial class MSB_NR
             TypeData?.Reindex(msb);
         }
 
-        internal override void Write(BinaryWriterEx bw, int version)
+        internal override void Write(BexWriter bw, int version)
         {
             long start = bw.Position;
 
@@ -317,7 +317,7 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal PartStruct50(BinaryReaderEx br)
+        internal PartStruct50(BexReader br)
         {
             DispGroups = br.ReadUInt32s(8);
             DrawGroups = br.ReadUInt32s(8);
@@ -331,7 +331,7 @@ public partial class MSB_NR
                 br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteUInt32s(DispGroups);
             bw.WriteUInt32s(DrawGroups);
@@ -364,7 +364,7 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal PartStruct58(BinaryReaderEx br)
+        internal PartStruct58(BexReader br)
         {
             Unk00 = br.ReadInt32();
             DispGroups = br.ReadUInt32s(8);
@@ -380,7 +380,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteUInt32s(DispGroups);
@@ -437,7 +437,7 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal PartCommon(BinaryReaderEx br)
+        internal PartCommon(BexReader br)
         {
             EntityId = br.ReadUInt32();
             Unk04 = br.ReadBoolean();
@@ -467,7 +467,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteUInt32(EntityId);
             bw.WriteBoolean(Unk04);
@@ -511,7 +511,7 @@ public partial class MSB_NR
 
         public PartGparam DeepClone() => (PartGparam)MemberwiseClone();
 
-        internal PartGparam(BinaryReaderEx br)
+        internal PartGparam(BexReader br)
         {
             LightId = br.ReadInt32();
             FogId = br.ReadInt32();
@@ -523,7 +523,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(LightId);
             bw.WriteInt32(FogId);
@@ -553,7 +553,7 @@ public partial class MSB_NR
 
         public PartSceneGparam DeepClone() => (PartSceneGparam)MemberwiseClone();
 
-        internal PartSceneGparam(BinaryReaderEx br)
+        internal PartSceneGparam(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -582,7 +582,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -628,14 +628,14 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal PartGrass(BinaryReaderEx br)
+        internal PartGrass(BexReader br)
         {
             GrassTypes = br.ReadInt32s(6);
             br.AssertInt32(-1);
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32s(GrassTypes);
             bw.WriteInt32(-1);
@@ -651,7 +651,7 @@ public partial class MSB_NR
 
         public PartStruct88 DeepClone() => (PartStruct88)MemberwiseClone();
 
-        internal PartStruct88(BinaryReaderEx br)
+        internal PartStruct88(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
@@ -663,7 +663,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -684,7 +684,7 @@ public partial class MSB_NR
 
         public PartStruct90 DeepClone() => (PartStruct90)MemberwiseClone();
 
-        internal PartStruct90(BinaryReaderEx br)
+        internal PartStruct90(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
@@ -696,7 +696,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -725,7 +725,7 @@ public partial class MSB_NR
 
         public PartStruct98 DeepClone() => (PartStruct98)MemberwiseClone();
 
-        internal PartStruct98(BinaryReaderEx br)
+        internal PartStruct98(BexReader br)
         {
             Unk00 = br.ReadInt32();
             Unk04 = br.ReadInt32();
@@ -737,7 +737,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(Unk04);
@@ -756,7 +756,7 @@ public partial class MSB_NR
 
         public PartStructa0 DeepClone() => (PartStructa0)MemberwiseClone();
 
-        internal PartStructa0(BinaryReaderEx br)
+        internal PartStructa0(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -768,7 +768,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -796,7 +796,7 @@ public partial class MSB_NR
 
         public PartStructa8 DeepClone() => (PartStructa8)MemberwiseClone();
 
-        internal PartStructa8(BinaryReaderEx br)
+        internal PartStructa8(BexReader br)
         {
             Unk00 = br.ReadInt16();
             Unk02 = br.ReadInt16();
@@ -806,7 +806,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt16(Unk00);
             bw.WriteInt16(Unk02);
@@ -822,20 +822,20 @@ public partial class MSB_NR
         public virtual PartTypeData DeepClone() => (PartTypeData)MemberwiseClone();
         internal virtual void Deindex(MSB_NR msb) { }
         internal virtual void Reindex(MSB_NR msb) { }
-        internal abstract void Write(BinaryWriterEx bw);
+        internal abstract void Write(BexWriter bw);
     }
 
     public class PartMapData : PartTypeData
     {
         public PartMapData() { }
 
-        internal PartMapData(BinaryReaderEx br)
+        internal PartMapData(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -892,7 +892,7 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal PartEneData(BinaryReaderEx br)
+        internal PartEneData(BexReader br)
         {
             long start = br.Position;
 
@@ -952,7 +952,7 @@ public partial class MSB_NR
             _patrolRouteIndex = (short)FindIndex(patrolRoutes, PatrolRoute);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             long start = bw.Position;
 
@@ -1003,7 +1003,7 @@ public partial class MSB_NR
 
         public PartEneStruct78 DeepClone() => (PartEneStruct78)MemberwiseClone();
 
-        internal PartEneStruct78(BinaryReaderEx br)
+        internal PartEneStruct78(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertSingle(1);
@@ -1019,7 +1019,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteSingle(1);
@@ -1042,7 +1042,7 @@ public partial class MSB_NR
 
         public PartPlayerData() { }
 
-        internal PartPlayerData(BinaryReaderEx br)
+        internal PartPlayerData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
@@ -1050,7 +1050,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -1082,7 +1082,7 @@ public partial class MSB_NR
             Unk3c = -1;
         }
 
-        internal PartHitData(BinaryReaderEx br)
+        internal PartHitData(BexReader br)
         {
             Unk00 = br.ReadByte();
             br.AssertSByte(-1);
@@ -1115,7 +1115,7 @@ public partial class MSB_NR
             br.AssertInt16(-1);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteByte(Unk00);
             bw.WriteSByte(-1);
@@ -1153,7 +1153,7 @@ public partial class MSB_NR
     {
         public PartDummyObjData() { }
 
-        internal PartDummyObjData(BinaryReaderEx br)
+        internal PartDummyObjData(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
@@ -1165,7 +1165,7 @@ public partial class MSB_NR
             br.AssertInt32(-1);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -1200,7 +1200,7 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal PartConnectHitData(BinaryReaderEx br)
+        internal PartConnectHitData(BexReader br)
         {
             _parentHitIndex = br.ReadInt32();
             MapId = br.ReadSBytes(4);
@@ -1222,7 +1222,7 @@ public partial class MSB_NR
             _parentHitIndex = FindIndex(hits, ParentHit);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(_parentHitIndex);
             bw.WriteSBytes(MapId);
@@ -1287,7 +1287,7 @@ public partial class MSB_NR
             return clone;
         }
 
-        internal PartGeomData(BinaryReaderEx br)
+        internal PartGeomData(BexReader br)
         {
             long start = br.Position;
 
@@ -1363,7 +1363,7 @@ public partial class MSB_NR
             _partIndex54 = FindIndex(msb.Parts.Entries, Part54);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             long start = bw.Position;
 
@@ -1427,7 +1427,7 @@ public partial class MSB_NR
 
         public PartGeomStruct68 DeepClone() => (PartGeomStruct68)MemberwiseClone();
 
-        internal PartGeomStruct68(BinaryReaderEx br)
+        internal PartGeomStruct68(BexReader br)
         {
             Unk00 = br.ReadInt16();
             br.AssertInt16(-1);
@@ -1449,7 +1449,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt16(Unk00);
             bw.WriteInt16(-1);
@@ -1487,7 +1487,7 @@ public partial class MSB_NR
 
         public PartGeomStruct70 DeepClone() => (PartGeomStruct70)MemberwiseClone();
 
-        internal PartGeomStruct70(BinaryReaderEx br)
+        internal PartGeomStruct70(BexReader br)
         {
             br.AssertInt32(0);
             Unk04 = br.ReadInt32();
@@ -1509,7 +1509,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(Unk04);
@@ -1548,7 +1548,7 @@ public partial class MSB_NR
 
         public PartGeomStruct78 DeepClone() => (PartGeomStruct78)MemberwiseClone();
 
-        internal PartGeomStruct78(BinaryReaderEx br)
+        internal PartGeomStruct78(BexReader br)
         {
             Unk00 = br.ReadInt32();
             Unk04 = br.ReadSingle();
@@ -1573,7 +1573,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteSingle(Unk04);
@@ -1611,7 +1611,7 @@ public partial class MSB_NR
 
         public PartGeomStruct80 DeepClone() => (PartGeomStruct80)MemberwiseClone();
 
-        internal PartGeomStruct80(BinaryReaderEx br)
+        internal PartGeomStruct80(BexReader br)
         {
             Unk00 = br.ReadBoolean();
             br.AssertSByte(-1);
@@ -1634,7 +1634,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteBoolean(Unk00);
             bw.WriteSByte(-1);

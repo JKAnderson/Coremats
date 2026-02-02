@@ -15,7 +15,7 @@ public partial class MSB_NR
 
     public abstract class PointForm
     {
-        internal static PointForm Read(BinaryReaderEx br, PointFormType type)
+        internal static PointForm Read(BexReader br, PointFormType type)
         {
             return type switch
             {
@@ -31,7 +31,7 @@ public partial class MSB_NR
 
         internal virtual void Deindex(MSB_NR msb) { }
         internal virtual void Reindex(MSB_NR msb) { }
-        internal abstract void Write(BinaryWriterEx bw);
+        internal abstract void Write(BexWriter bw);
 
         public class Circle : PointForm
         {
@@ -39,12 +39,12 @@ public partial class MSB_NR
 
             public Circle() { }
 
-            internal Circle(BinaryReaderEx br)
+            internal Circle(BexReader br)
             {
                 Radius = br.ReadSingle();
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BexWriter bw)
             {
                 bw.WriteSingle(Radius);
             }
@@ -56,12 +56,12 @@ public partial class MSB_NR
 
             public Sphere() { }
 
-            internal Sphere(BinaryReaderEx br)
+            internal Sphere(BexReader br)
             {
                 Radius = br.ReadSingle();
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BexWriter bw)
             {
                 bw.WriteSingle(Radius);
             }
@@ -74,13 +74,13 @@ public partial class MSB_NR
 
             public Cylinder() { }
 
-            internal Cylinder(BinaryReaderEx br)
+            internal Cylinder(BexReader br)
             {
                 Radius = br.ReadSingle();
                 Height = br.ReadSingle();
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BexWriter bw)
             {
                 bw.WriteSingle(Radius);
                 bw.WriteSingle(Height);
@@ -94,13 +94,13 @@ public partial class MSB_NR
 
             public Square() { }
 
-            internal Square(BinaryReaderEx br)
+            internal Square(BexReader br)
             {
                 Width = br.ReadSingle();
                 Depth = br.ReadSingle();
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BexWriter bw)
             {
                 bw.WriteSingle(Width);
                 bw.WriteSingle(Depth);
@@ -115,14 +115,14 @@ public partial class MSB_NR
 
             public Box() { }
 
-            internal Box(BinaryReaderEx br)
+            internal Box(BexReader br)
             {
                 Width = br.ReadSingle();
                 Depth = br.ReadSingle();
                 Height = br.ReadSingle();
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BexWriter bw)
             {
                 bw.WriteSingle(Width);
                 bw.WriteSingle(Depth);
@@ -141,7 +141,7 @@ public partial class MSB_NR
                     Points[i] = new CompositeItem();
             }
 
-            internal Composite(BinaryReaderEx br)
+            internal Composite(BexReader br)
             {
                 Points = new CompositeItem[8];
                 for (int i = 0; i < 8; i++)
@@ -160,7 +160,7 @@ public partial class MSB_NR
                     point.Reindex(msb);
             }
 
-            internal override void Write(BinaryWriterEx bw)
+            internal override void Write(BexWriter bw)
             {
                 foreach (CompositeItem item in Points)
                     item.Write(bw);
@@ -175,7 +175,7 @@ public partial class MSB_NR
 
             public CompositeItem() { }
 
-            internal CompositeItem(BinaryReaderEx br)
+            internal CompositeItem(BexReader br)
             {
                 _pointIndex = br.ReadInt32();
                 Unk04 = br.ReadInt32();
@@ -191,7 +191,7 @@ public partial class MSB_NR
                 _pointIndex = FindIndex(msb.Points.Entries, Point);
             }
 
-            internal void Write(BinaryWriterEx bw)
+            internal void Write(BexWriter bw)
             {
                 bw.WriteInt32(_pointIndex);
                 bw.WriteInt32(Unk04);

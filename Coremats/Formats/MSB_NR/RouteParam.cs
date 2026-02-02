@@ -14,7 +14,7 @@ public partial class MSB_NR
 
         public RouteParam() : base() { }
 
-        internal RouteParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
+        internal RouteParam(BexReader br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void PreprocessStage1()
         {
@@ -41,11 +41,11 @@ public partial class MSB_NR
             Name = "";
         }
 
-        internal Route(BinaryReaderEx br, int version)
+        internal Route(BexReader br, int version)
         {
             long start = br.Position;
 
-            Name = br.GetUTF16(start + br.ReadInt64());
+            Name = br.PeekUtf16(start + br.ReadInt64());
             ParentPointNo = br.ReadInt32();
             ChildPointNo = br.ReadInt32();
             Type = br.ReadEnum32<RouteType>();
@@ -78,7 +78,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw, int version)
+        internal override void Write(BexWriter bw, int version)
         {
             long start = bw.Position;
 

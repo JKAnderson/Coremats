@@ -1,12 +1,13 @@
 ﻿using System.Drawing;
+using System.Numerics;
 using System.Text;
 
-namespace Coremats;
+namespace Bex;
 
 /// <summary>
 /// An extended writer for binary data supporting big and little endianness, value reservation, and arrays.
 /// </summary>
-public class BinaryWriterEx
+public class BexWriter
 {
     private BinaryWriter bw;
     private Stack<long> steps;
@@ -49,12 +50,12 @@ public class BinaryWriterEx
     /// <summary>
     /// Initializes a new <c>BinaryWriterEx</c> writing to an empty <c>MemoryStream</c>
     /// </summary>
-    public BinaryWriterEx(bool bigEndian) : this(bigEndian, new MemoryStream()) { }
+    public BexWriter(bool bigEndian) : this(bigEndian, new MemoryStream()) { }
 
     /// <summary>
     /// Initializes a new <c>BinaryWriterEx</c> writing to the specified stream.
     /// </summary>
-    public BinaryWriterEx(bool bigEndian, Stream stream)
+    public BexWriter(bool bigEndian, Stream stream)
     {
         BigEndian = bigEndian;
         steps = new Stack<long>();
@@ -661,7 +662,7 @@ public class BinaryWriterEx
     /// </summary>
     public void WriteASCII(string text, bool terminate = false)
     {
-        WriteChars(text, SFEncoding.ASCII, terminate);
+        WriteChars(text, Encoding.ASCII, terminate);
     }
 
     /// <summary>
@@ -669,7 +670,7 @@ public class BinaryWriterEx
     /// </summary>
     public void WriteShiftJIS(string text, bool terminate = false)
     {
-        WriteChars(text, SFEncoding.ShiftJIS, terminate);
+        WriteChars(text, ExtraEncoding.ShiftJis, terminate);
     }
 
     /// <summary>
@@ -678,9 +679,9 @@ public class BinaryWriterEx
     public void WriteUTF16(string text, bool terminate = false)
     {
         if (BigEndian)
-            WriteChars(text, SFEncoding.UTF16BE, terminate);
+            WriteChars(text, Encoding.BigEndianUnicode, terminate);
         else
-            WriteChars(text, SFEncoding.UTF16, terminate);
+            WriteChars(text, Encoding.Unicode, terminate);
     }
 
     /// <summary>
@@ -692,7 +693,7 @@ public class BinaryWriterEx
         for (int i = 0; i < size; i++)
             fixstr[i] = padding;
 
-        byte[] bytes = SFEncoding.ShiftJIS.GetBytes(text + '\0');
+        byte[] bytes = ExtraEncoding.ShiftJis.GetBytes(text + '\0');
         Array.Copy(bytes, fixstr, Math.Min(size, bytes.Length));
         bw.Write(fixstr);
     }
@@ -708,9 +709,9 @@ public class BinaryWriterEx
 
         byte[] bytes;
         if (BigEndian)
-            bytes = SFEncoding.UTF16BE.GetBytes(text + '\0');
+            bytes = Encoding.BigEndianUnicode.GetBytes(text + '\0');
         else
-            bytes = SFEncoding.UTF16.GetBytes(text + '\0');
+            bytes = Encoding.Unicode.GetBytes(text + '\0');
         Array.Copy(bytes, fixstr, Math.Min(size, bytes.Length));
         bw.Write(fixstr);
     }

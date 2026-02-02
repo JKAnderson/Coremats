@@ -41,7 +41,7 @@ public partial class MSB_NR
 
         public PointParam() : base() { }
 
-        internal PointParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
+        internal PointParam(BexReader br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void Postprocess(MSB_NR msb)
         {
@@ -93,11 +93,11 @@ public partial class MSB_NR
             Struct98 = new();
         }
 
-        internal Point(BinaryReaderEx br, int version)
+        internal Point(BexReader br, int version)
         {
             long start = br.Position;
 
-            Name = br.GetUTF16(start + br.ReadInt64());
+            Name = br.PeekUtf16(start + br.ReadInt64());
             Type = br.ReadEnum32<PointType>();
             _typeIndex = br.ReadInt32();
             FormType = br.ReadEnum32<PointFormType>();
@@ -187,7 +187,7 @@ public partial class MSB_NR
             TypeData?.Reindex(msb);
         }
 
-        internal override void Write(BinaryWriterEx bw, int version)
+        internal override void Write(BexWriter bw, int version)
         {
             long start = bw.Position;
 
@@ -257,7 +257,7 @@ public partial class MSB_NR
             Variation = -1;
         }
 
-        internal PointCommon(BinaryReaderEx br)
+        internal PointCommon(BexReader br)
         {
             _partIndex = br.ReadInt32();
             EntityId = br.ReadUInt32();
@@ -281,7 +281,7 @@ public partial class MSB_NR
             _partIndex = FindIndex(msb.Parts.Entries, Part);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(_partIndex);
             bw.WriteUInt32(EntityId);
@@ -310,7 +310,7 @@ public partial class MSB_NR
             Unk10 = -1;
         }
 
-        internal PointStruct98(BinaryReaderEx br)
+        internal PointStruct98(BexReader br)
         {
             Unk00 = br.ReadInt32();
             Unk04 = br.ReadInt32();
@@ -322,7 +322,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal void Write(BinaryWriterEx bw)
+        internal void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(Unk04);
@@ -339,7 +339,7 @@ public partial class MSB_NR
     {
         internal virtual void Deindex(MSB_NR msb) { }
         internal virtual void Reindex(MSB_NR msb) { }
-        internal abstract void Write(BinaryWriterEx bw);
+        internal abstract void Write(BexWriter bw);
     }
 
     public class PointEnvMapPointData : PointTypeData
@@ -365,7 +365,7 @@ public partial class MSB_NR
             Unk0f = true;
         }
 
-        internal PointEnvMapPointData(BinaryReaderEx br)
+        internal PointEnvMapPointData(BexReader br)
         {
             Unk00 = br.ReadSingle();
             Unk04 = br.ReadInt32();
@@ -386,7 +386,7 @@ public partial class MSB_NR
             br.AssertInt16(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteSingle(Unk00);
             bw.WriteInt32(Unk04);
@@ -414,13 +414,13 @@ public partial class MSB_NR
 
         public PointRespawnPointData() { }
 
-        internal PointRespawnPointData(BinaryReaderEx br)
+        internal PointRespawnPointData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -439,7 +439,7 @@ public partial class MSB_NR
             ChildPoints = new Point[16];
         }
 
-        internal PointSoundData(BinaryReaderEx br)
+        internal PointSoundData(BexReader br)
         {
             br.AssertInt32(0);
             SoundId = br.ReadInt32();
@@ -459,7 +459,7 @@ public partial class MSB_NR
             _childPointIndices = FindIndices(msb.Points.Entries, ChildPoints);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(SoundId);
@@ -478,7 +478,7 @@ public partial class MSB_NR
 
         public PointSfxData() { }
 
-        internal PointSfxData(BinaryReaderEx br)
+        internal PointSfxData(BexReader br)
         {
             EffectId = br.ReadInt32();
             Unk04 = br.ReadBoolean();
@@ -486,7 +486,7 @@ public partial class MSB_NR
             br.AssertInt16(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(EffectId);
             bw.WriteBoolean(Unk04);
@@ -506,7 +506,7 @@ public partial class MSB_NR
             EffectId = 808006;
         }
 
-        internal PointWindSfxData(BinaryReaderEx br)
+        internal PointWindSfxData(BexReader br)
         {
             EffectId = br.ReadInt32();
             _windAreaIndex = br.ReadInt32();
@@ -523,7 +523,7 @@ public partial class MSB_NR
             _windAreaIndex = FindIndex(msb.Points.Entries, WindArea);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(EffectId);
             bw.WriteInt32(_windAreaIndex);
@@ -535,7 +535,7 @@ public partial class MSB_NR
     {
         public PointReturnPointData() { }
 
-        internal PointReturnPointData(BinaryReaderEx br)
+        internal PointReturnPointData(BexReader br)
         {
             br.AssertInt32(-1);
             br.AssertInt32(0);
@@ -543,7 +543,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(-1);
             bw.WriteInt32(0);
@@ -575,7 +575,7 @@ public partial class MSB_NR
             Unk36 = 1;
         }
 
-        internal PointEnvMapEffectBoxData(BinaryReaderEx br)
+        internal PointEnvMapEffectBoxData(BexReader br)
         {
             Unk00 = br.ReadSingle();
             Unk04 = br.ReadSingle();
@@ -601,7 +601,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteSingle(Unk00);
             bw.WriteSingle(Unk04);
@@ -637,7 +637,7 @@ public partial class MSB_NR
             MapId = new sbyte[4];
         }
 
-        internal PointMapConnectionData(BinaryReaderEx br)
+        internal PointMapConnectionData(BexReader br)
         {
             MapId = br.ReadSBytes(4);
             br.AssertInt32(0);
@@ -645,7 +645,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteSBytes(MapId);
             bw.WriteInt32(0);
@@ -660,7 +660,7 @@ public partial class MSB_NR
 
         public PointMufflingBoxData() { }
 
-        internal PointMufflingBoxData(BinaryReaderEx br)
+        internal PointMufflingBoxData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
@@ -682,7 +682,7 @@ public partial class MSB_NR
             br.AssertSingle(-1);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -711,7 +711,7 @@ public partial class MSB_NR
 
         public PointMufflingPortalData() { }
 
-        internal PointMufflingPortalData(BinaryReaderEx br)
+        internal PointMufflingPortalData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
@@ -729,7 +729,7 @@ public partial class MSB_NR
             br.AssertInt32(-1);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -767,7 +767,7 @@ public partial class MSB_NR
             Unk0a = -1;
         }
 
-        internal PointSoundOverrideData(BinaryReaderEx br)
+        internal PointSoundOverrideData(BexReader br)
         {
             Unk00 = br.ReadSByte();
             Unk01 = br.ReadByte();
@@ -785,7 +785,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteSByte(Unk00);
             bw.WriteByte(Unk01);
@@ -813,12 +813,12 @@ public partial class MSB_NR
             Unk00 = -1;
         }
 
-        internal PointPatrolPointData(BinaryReaderEx br)
+        internal PointPatrolPointData(BexReader br)
         {
             Unk00 = br.ReadInt32();
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
         }
@@ -833,7 +833,7 @@ public partial class MSB_NR
             Unk00 = -1;
         }
 
-        internal PointMapPointData(BinaryReaderEx br)
+        internal PointMapPointData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(-1);
@@ -845,7 +845,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(-1);
@@ -867,7 +867,7 @@ public partial class MSB_NR
             Unk00 = 4000;
         }
 
-        internal PointMapInfoOverrideData(BinaryReaderEx br)
+        internal PointMapInfoOverrideData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(-1);
@@ -879,7 +879,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(-1);
@@ -903,7 +903,7 @@ public partial class MSB_NR
             Unk58 = -1;
         }
 
-        internal PointMassPlacementData(BinaryReaderEx br)
+        internal PointMassPlacementData(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(-1);
@@ -931,7 +931,7 @@ public partial class MSB_NR
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(-1);
@@ -969,12 +969,12 @@ public partial class MSB_NR
             Unk00 = -1;
         }
 
-        internal PointHitSettingData(BinaryReaderEx br)
+        internal PointHitSettingData(BexReader br)
         {
             Unk00 = br.ReadInt32();
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
         }
@@ -984,12 +984,12 @@ public partial class MSB_NR
     {
         public PointWeatherAssetGenerationData() { }
 
-        internal PointWeatherAssetGenerationData(BinaryReaderEx br)
+        internal PointWeatherAssetGenerationData(BexReader br)
         {
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
         }
@@ -1008,14 +1008,14 @@ public partial class MSB_NR
             Unk08 = 200;
         }
 
-        internal PointBigJumpData(BinaryReaderEx br)
+        internal PointBigJumpData(BexReader br)
         {
             Unk00 = br.ReadSingle();
             Unk04 = br.ReadInt32();
             Unk08 = br.ReadInt32();
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteSingle(Unk00);
             bw.WriteInt32(Unk04);
@@ -1029,13 +1029,13 @@ public partial class MSB_NR
 
         public PointSoundDummyData() { }
 
-        internal PointSoundDummyData(BinaryReaderEx br)
+        internal PointSoundDummyData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -1046,13 +1046,13 @@ public partial class MSB_NR
     {
         public PointFallPreventionOverrideData() { }
 
-        internal PointFallPreventionOverrideData(BinaryReaderEx br)
+        internal PointFallPreventionOverrideData(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -1063,13 +1063,13 @@ public partial class MSB_NR
     {
         public PointSmallBaseAttachData() { }
 
-        internal PointSmallBaseAttachData(BinaryReaderEx br)
+        internal PointSmallBaseAttachData(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -1082,13 +1082,13 @@ public partial class MSB_NR
 
         public PointBirdRouteData() { }
 
-        internal PointBirdRouteData(BinaryReaderEx br)
+        internal PointBirdRouteData(BexReader br)
         {
             Unk00 = br.ReadInt32();
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
             bw.WriteInt32(0);
@@ -1101,12 +1101,12 @@ public partial class MSB_NR
 
         public PointRespawnOverrideData() { }
 
-        internal PointRespawnOverrideData(BinaryReaderEx br)
+        internal PointRespawnOverrideData(BexReader br)
         {
             Unk00 = br.ReadInt32();
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(Unk00);
         }
@@ -1116,13 +1116,13 @@ public partial class MSB_NR
     {
         public PointUserEdgeRemovalInnerData() { }
 
-        internal PointUserEdgeRemovalInnerData(BinaryReaderEx br)
+        internal PointUserEdgeRemovalInnerData(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -1133,13 +1133,13 @@ public partial class MSB_NR
     {
         public PointUserEdgeRemovalOuterData() { }
 
-        internal PointUserEdgeRemovalOuterData(BinaryReaderEx br)
+        internal PointUserEdgeRemovalOuterData(BexReader br)
         {
             br.AssertInt32(0);
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteInt32(0);
             bw.WriteInt32(0);
@@ -1164,7 +1164,7 @@ public partial class MSB_NR
             Unk14 = -1;
         }
 
-        internal PointBigJumpSealableData(BinaryReaderEx br)
+        internal PointBigJumpSealableData(BexReader br)
         {
             Unk00 = br.ReadSingle();
             Unk04 = br.ReadInt32();
@@ -1174,7 +1174,7 @@ public partial class MSB_NR
             Unk14 = br.ReadInt32();
         }
 
-        internal override void Write(BinaryWriterEx bw)
+        internal override void Write(BexWriter bw)
         {
             bw.WriteSingle(Unk00);
             bw.WriteInt32(Unk04);

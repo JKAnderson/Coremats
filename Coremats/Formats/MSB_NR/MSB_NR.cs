@@ -1,4 +1,5 @@
 ﻿namespace Coremats;
+
 public partial class MSB_NR : CompressibleFileFormat
 {
     public ModelParam Models { get; set; }
@@ -26,9 +27,9 @@ public partial class MSB_NR : CompressibleFileFormat
         Parts = new();
     }
 
-    private MSB_NR(BinaryReaderEx br)
+    private MSB_NR(BexReader br)
     {
-        br.AssertASCII("MSB ");
+        br.AssertAscii("MSB ");
         br.AssertInt32(1);
         br.AssertInt32(0x10);
         br.AssertByte(0);
@@ -48,7 +49,7 @@ public partial class MSB_NR : CompressibleFileFormat
         Parts.Postprocess(this);
     }
 
-    private void Write(BinaryWriterEx bw)
+    private void Write(BexWriter bw)
     {
         Models.PreprocessStage1();
         Events.PreprocessStage1();
@@ -78,7 +79,7 @@ public partial class MSB_NR : CompressibleFileFormat
 
     public abstract class Entry
     {
-        internal abstract void Write(BinaryWriterEx bw, int version);
+        internal abstract void Write(BexWriter bw, int version);
     }
 
     public abstract class Param<T> where T : Entry
@@ -93,11 +94,11 @@ public partial class MSB_NR : CompressibleFileFormat
             Entries = [];
         }
 
-        protected Param(BinaryReaderEx br, bool lastParam, Func<BinaryReaderEx, int, T> readEntry)
+        protected Param(BexReader br, bool lastParam, Func<BexReader, int, T> readEntry)
         {
             Version = br.AssertInt32(75, 78, 79, 80);
             int entryCount = br.ReadInt32() - 1;
-            string name = br.GetUTF16(br.ReadInt64());
+            string name = br.PeekUtf16(br.ReadInt64());
             long[] offsets = br.ReadInt64s(entryCount);
             long nextParamOffset = br.ReadInt64();
 
@@ -117,7 +118,7 @@ public partial class MSB_NR : CompressibleFileFormat
                 br.Position = nextParamOffset;
         }
 
-        internal void Write(BinaryWriterEx bw, bool lastParam)
+        internal void Write(BexWriter bw, bool lastParam)
         {
             bw.WriteInt32(Version);
             bw.WriteInt32(Entries.Count + 1);

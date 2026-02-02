@@ -7,12 +7,12 @@ namespace Coremats;
 /// </summary>
 public static class DCX
 {
-    public static bool Is(BinaryReaderEx br)
+    public static bool Is(BexReader br)
     {
         if (br.Stream.Length < 4)
             return false;
 
-        string magic = br.GetASCII(0, 4);
+        string magic = br.PeekAscii(0, 4);
         return magic == "DCP\0" || magic == "DCX\0";
     }
 
@@ -21,7 +21,7 @@ public static class DCX
     /// </summary>
     public static bool Is(byte[] bytes)
     {
-        var br = new BinaryReaderEx(true, bytes);
+        var br = new BexReader(bytes, true);
         return Is(br);
     }
 
@@ -32,7 +32,7 @@ public static class DCX
     {
         using (FileStream stream = File.OpenRead(path))
         {
-            var br = new BinaryReaderEx(true, stream);
+            var br = new BexReader(stream, true);
             return Is(br);
         }
     }
@@ -43,7 +43,7 @@ public static class DCX
     /// </summary>
     public static byte[] Decompress(byte[] data, out Type type)
     {
-        BinaryReaderEx br = new BinaryReaderEx(true, data);
+        BexReader br = new BexReader(data, true);
         return Decompress(br, out type);
     }
 
@@ -62,7 +62,7 @@ public static class DCX
     {
         using (FileStream stream = File.OpenRead(path))
         {
-            BinaryReaderEx br = new BinaryReaderEx(true, stream);
+            BexReader br = new BexReader(stream, true);
             return Decompress(br, out type);
         }
     }
@@ -76,13 +76,13 @@ public static class DCX
     }
     #endregion
 
-    public static byte[] Decompress(BinaryReaderEx br, out Type type)
+    public static byte[] Decompress(BexReader br, out Type type)
     {
         br.BigEndian = true;
-        string magic = br.GetASCII(0, 4);
+        string magic = br.PeekAscii(0, 4);
         if (magic == "DCP\0")
         {
-            string format = br.GetASCII(4, 4);
+            string format = br.PeekAscii(4, 4);
             return format switch
             {
                 "DFLT" => DecompressDCPDFLT(br, out type),
@@ -92,7 +92,7 @@ public static class DCX
         }
         else if (magic == "DCX\0")
         {
-            string format = br.GetASCII(0x28, 4);
+            string format = br.PeekAscii(0x28, 4);
             return format switch
             {
                 "DFLT" => DecompressDCXDFLT(br, out type),
@@ -104,8 +104,8 @@ public static class DCX
         }
         else
         {
-            byte b0 = br.GetByte(0);
-            byte b1 = br.GetByte(1);
+            byte b0 = br.PeekByte(0);
+            byte b1 = br.PeekByte(1);
             if (b0 == 0x78 && (b1 == 0x01 || b1 == 0x5E || b1 == 0x9C || b1 == 0xDA))
             {
                 type = Type.Zlib;
@@ -118,10 +118,10 @@ public static class DCX
         }
     }
 
-    private static byte[] DecompressDCPDFLT(BinaryReaderEx br, out Type type)
+    private static byte[] DecompressDCPDFLT(BexReader br, out Type type)
     {
-        br.AssertASCII("DCP\0");
-        br.AssertASCII("DFLT");
+        br.AssertAscii("DCP\0");
+        br.AssertAscii("DFLT");
         br.AssertInt32(0x20);
         br.AssertByte(9);
         br.AssertByte(0);
@@ -132,23 +132,23 @@ public static class DCX
         br.AssertInt32(0);
         br.AssertInt32(0x00010100);
 
-        br.AssertASCII("DCS\0");
+        br.AssertAscii("DCS\0");
         int uncompressedSize = br.ReadInt32();
         int compressedSize = br.ReadInt32();
 
         byte[] decompressed = SFUtil.ReadZlib(br, compressedSize);
 
-        br.AssertASCII("DCA\0");
+        br.AssertAscii("DCA\0");
         br.AssertInt32(8);
 
         type = Type.DCP_DFLT;
         return decompressed;
     }
 
-    private static byte[] DecompressDCPEDGE(BinaryReaderEx br, out Type type)
+    private static byte[] DecompressDCPEDGE(BexReader br, out Type type)
     {
-        br.AssertASCII("DCP\0");
-        br.AssertASCII("EDGE");
+        br.AssertAscii("DCP\0");
+        br.AssertAscii("EDGE");
         br.AssertInt32(0x20);
         br.AssertByte(9);
         br.AssertByte(0);
@@ -159,16 +159,16 @@ public static class DCX
         br.AssertInt32(0x0);
         br.AssertInt32(0x00100100);
 
-        br.AssertASCII("DCS\0");
+        br.AssertAscii("DCS\0");
         int uncompressedSize = br.ReadInt32();
         int compressedSize = br.ReadInt32();
         br.AssertInt32(0);
         long dataStart = br.Position;
         br.Skip(compressedSize);
 
-        br.AssertASCII("DCA\0");
+        br.AssertAscii("DCA\0");
         int dcaSize = br.ReadInt32();
-        br.AssertASCII("EgdT");
+        br.AssertAscii("EgdT");
         br.AssertInt32(0x00010000);
         br.AssertInt32(0x20);
         br.AssertInt32(0x10);
@@ -190,7 +190,7 @@ public static class DCX
                 int size = br.ReadInt32();
                 bool compressed = br.AssertInt32(0, 1) == 1;
 
-                byte[] chunk = br.GetBytes(dataStart + offset, size);
+                byte[] chunk = br.PeekBytes(dataStart + offset, size);
 
                 if (compressed)
                 {
@@ -209,21 +209,21 @@ public static class DCX
         return decompressed;
     }
 
-    private static byte[] DecompressDCXEDGE(BinaryReaderEx br, out Type type)
+    private static byte[] DecompressDCXEDGE(BexReader br, out Type type)
     {
-        br.AssertASCII("DCX\0");
+        br.AssertAscii("DCX\0");
         br.AssertInt32(0x10000);
         br.AssertInt32(0x18);
         br.AssertInt32(0x24);
         br.AssertInt32(0x24);
         int unk14 = br.ReadInt32();
 
-        br.AssertASCII("DCS\0");
+        br.AssertAscii("DCS\0");
         int uncompressedSize = br.ReadInt32();
         int compressedSize = br.ReadInt32();
 
-        br.AssertASCII("DCP\0");
-        br.AssertASCII("EDGE");
+        br.AssertAscii("DCP\0");
+        br.AssertAscii("EDGE");
         br.AssertInt32(0x20);
         br.AssertByte(9);
         br.AssertByte(0);
@@ -235,10 +235,10 @@ public static class DCX
         br.AssertInt32(0x00100100);
 
         long dcaStart = br.Position;
-        br.AssertASCII("DCA\0");
+        br.AssertAscii("DCA\0");
         int dcaSize = br.ReadInt32();
         // ???
-        br.AssertASCII("EgdT");
+        br.AssertAscii("EgdT");
         br.AssertInt32(0x00010100);
         br.AssertInt32(0x24);
         br.AssertInt32(0x10);
@@ -265,7 +265,7 @@ public static class DCX
                 int size = br.ReadInt32();
                 bool compressed = br.AssertInt32(0, 1) == 1;
 
-                byte[] chunk = br.GetBytes(dcaStart + dcaSize + offset, size);
+                byte[] chunk = br.PeekBytes(dcaStart + dcaSize + offset, size);
 
                 if (compressed)
                 {
@@ -284,21 +284,21 @@ public static class DCX
         return decompressed;
     }
 
-    private static byte[] DecompressDCXDFLT(BinaryReaderEx br, out Type type)
+    private static byte[] DecompressDCXDFLT(BexReader br, out Type type)
     {
-        br.AssertASCII("DCX\0");
+        br.AssertAscii("DCX\0");
         int unk04 = br.AssertInt32(0x10000, 0x11000);
         br.AssertInt32(0x18);
         br.AssertInt32(0x24);
         int unk10 = br.AssertInt32(0x24, 0x44);
         br.AssertInt32(unk10 == 0x24 ? 0x2c : 0x4c);
 
-        br.AssertASCII("DCS\0");
+        br.AssertAscii("DCS\0");
         int uncompressedSize = br.ReadInt32();
         int compressedSize = br.ReadInt32();
 
-        br.AssertASCII("DCP\0");
-        br.AssertASCII("DFLT");
+        br.AssertAscii("DCP\0");
+        br.AssertAscii("DFLT");
         br.AssertInt32(0x20);
         byte level = br.AssertByte(8, 9);
         br.AssertByte(0);
@@ -312,7 +312,7 @@ public static class DCX
         br.AssertInt32(0x0);
         br.AssertInt32(0x00010100);
 
-        br.AssertASCII("DCA\0");
+        br.AssertAscii("DCA\0");
         int compressedHeaderLength = br.ReadInt32();
 
         if (unk04 == 0x10000 && unk10 == 0x24 && level == 9 && unk38 == 0)
@@ -331,21 +331,21 @@ public static class DCX
         return SFUtil.ReadZlib(br, compressedSize);
     }
 
-    private static byte[] DecompressDCXKRAK(BinaryReaderEx br, out Type type)
+    private static byte[] DecompressDCXKRAK(BexReader br, out Type type)
     {
-        br.AssertASCII("DCX\0");
+        br.AssertAscii("DCX\0");
         br.AssertInt32(0x11000);
         br.AssertInt32(0x18);
         br.AssertInt32(0x24);
         br.AssertInt32(0x44);
         br.AssertInt32(0x4C);
 
-        br.AssertASCII("DCS\0");
+        br.AssertAscii("DCS\0");
         uint uncompressedSize = br.ReadUInt32();
         uint compressedSize = br.ReadUInt32();
 
-        br.AssertASCII("DCP\0");
-        br.AssertASCII("KRAK");
+        br.AssertAscii("DCP\0");
+        br.AssertAscii("KRAK");
         br.AssertInt32(0x20);
         byte level = br.AssertByte(6, 9);
         br.AssertByte(0);
@@ -356,7 +356,7 @@ public static class DCX
         br.AssertInt32(0);
         br.AssertInt32(0x10100);
 
-        br.AssertASCII("DCA\0");
+        br.AssertAscii("DCA\0");
         br.AssertInt32(8);
 
         if (level == 6)
@@ -370,21 +370,21 @@ public static class DCX
         return Oodle.Decompress(compressed, uncompressedSize);
     }
 
-    private static byte[] DecompressDCXZSTD(BinaryReaderEx br, out Type type)
+    private static byte[] DecompressDCXZSTD(BexReader br, out Type type)
     {
-        br.AssertASCII("DCX\0");
+        br.AssertAscii("DCX\0");
         br.AssertInt32(0x11000);
         br.AssertInt32(0x18);
         br.AssertInt32(0x24);
         br.AssertInt32(0x44);
         br.AssertInt32(0x4C);
 
-        br.AssertASCII("DCS\0");
+        br.AssertAscii("DCS\0");
         uint uncompressedSize = br.ReadUInt32();
         uint compressedSize = br.ReadUInt32();
 
-        br.AssertASCII("DCP\0");
-        br.AssertASCII("ZSTD");
+        br.AssertAscii("DCP\0");
+        br.AssertAscii("ZSTD");
         br.AssertInt32(0x20);
         byte level = br.AssertByte(21, 22);
         br.AssertByte(0);
@@ -395,7 +395,7 @@ public static class DCX
         br.AssertInt32(0);
         br.AssertInt32(0x10100);
 
-        br.AssertASCII("DCA\0");
+        br.AssertAscii("DCA\0");
         br.AssertInt32(8);
 
         if (level == 21)
@@ -416,7 +416,7 @@ public static class DCX
     /// </summary>
     public static byte[] Compress(byte[] data, Type type)
     {
-        BinaryWriterEx bw = new BinaryWriterEx(true);
+        BexWriter bw = new BexWriter(true);
         Compress(data, bw, type);
         return bw.FinishBytes();
     }
@@ -428,14 +428,14 @@ public static class DCX
     {
         using (FileStream stream = File.Create(path))
         {
-            BinaryWriterEx bw = new BinaryWriterEx(true, stream);
+            BexWriter bw = new BexWriter(true, stream);
             Compress(data, bw, type);
             bw.Finish();
         }
     }
     #endregion
 
-    public static void Compress(byte[] data, BinaryWriterEx bw, Type type)
+    public static void Compress(byte[] data, BexWriter bw, Type type)
     {
         bw.BigEndian = true;
         if (type == Type.Zlib)
@@ -462,7 +462,7 @@ public static class DCX
             throw new NotImplementedException("Compression for the given type is not implemented.");
     }
 
-    private static void CompressDCPDFLT(byte[] data, BinaryWriterEx bw)
+    private static void CompressDCPDFLT(byte[] data, BexWriter bw)
     {
         bw.WriteASCII("DCP\0");
         bw.WriteASCII("DFLT");
@@ -487,7 +487,7 @@ public static class DCX
         bw.WriteInt32(8);
     }
 
-    private static void CompressDCXEDGE(byte[] data, BinaryWriterEx bw)
+    private static void CompressDCXEDGE(byte[] data, BexWriter bw)
     {
         int chunkCount = data.Length / 0x10000;
         if (data.Length % 0x10000 > 0)
@@ -577,7 +577,7 @@ public static class DCX
         bw.FillInt32("CompressedSize", compressedSize);
     }
 
-    private static void CompressDCXDFLT(byte[] data, BinaryWriterEx bw, Type type)
+    private static void CompressDCXDFLT(byte[] data, BexWriter bw, Type type)
     {
         int unk04 = (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9) ? 0x10000 : 0x11000;
         int unk10 = type == Type.DCX_DFLT_10000_24_9 ? 0x24 : 0x44;
@@ -619,7 +619,7 @@ public static class DCX
         bw.FillInt32("CompressedSize", (int)(bw.Position - compressedStart));
     }
 
-    private static void CompressDCXKRAK(byte[] data, BinaryWriterEx bw, Type type)
+    private static void CompressDCXKRAK(byte[] data, BexWriter bw, Type type)
     {
         byte level = (byte)(type == Type.DCX_KRAK_6 ? 6 : 9);
         byte[] compressed = Oodle.Compress(data, Noodle.Oodle2_9.OodleLZ.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, (Noodle.Oodle2_9.OodleLZ.OodleLZ_CompressionLevel)level);
@@ -654,7 +654,7 @@ public static class DCX
         bw.Pad(0x10);
     }
 
-    private static void CompressDCXZSTD(byte[] data, BinaryWriterEx bw, Type type)
+    private static void CompressDCXZSTD(byte[] data, BexWriter bw, Type type)
     {
         byte level = (byte)(type == Type.DCX_ZSTD_21 ? 21 : 22);
         var compressor = new ZstdSharp.Compressor(level);

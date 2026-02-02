@@ -19,7 +19,7 @@ public partial class MSB_NR
 
         public ModelParam() : base() { }
 
-        internal ModelParam(BinaryReaderEx br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
+        internal ModelParam(BexReader br, bool lastParam) : base(br, lastParam, (br, version) => new(br, version)) { }
 
         internal void PreprocessStage1()
         {
@@ -47,21 +47,21 @@ public partial class MSB_NR
             File = "";
         }
 
-        internal Model(BinaryReaderEx br, int version)
+        internal Model(BexReader br, int version)
         {
             long start = br.Position;
 
-            Name = br.GetUTF16(start + br.ReadInt64());
+            Name = br.PeekUtf16(start + br.ReadInt64());
             Type = br.ReadEnum32<ModelType>();
             _typeIndex = br.ReadInt32();
-            File = br.GetUTF16(start + br.ReadInt64());
+            File = br.PeekUtf16(start + br.ReadInt64());
             InstanceCount = br.ReadInt32();
             br.AssertInt32(0);
             br.AssertInt32(0);
             br.AssertInt32(0);
         }
 
-        internal override void Write(BinaryWriterEx bw, int version)
+        internal override void Write(BexWriter bw, int version)
         {
             long start = bw.Position;
 
