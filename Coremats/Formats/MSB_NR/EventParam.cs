@@ -128,9 +128,9 @@ public partial class MSB_NR
             bw.ReserveInt64("EventOffset28");
 
             bw.FillInt64("EventNameOffset", bw.Position - start);
-            bw.WriteUTF16(Name, true);
+            bw.WriteUtf16(Name, true);
 
-            bw.Pad(8);
+            bw.Align(8);
             bw.FillInt64("EventCommonOffset", bw.Position - start);
             Common.Write(bw);
 

@@ -208,19 +208,19 @@ public partial class MSB_NR
             bw.ReserveInt64("PointOffset98");
 
             bw.FillInt64("PointNameOffset", bw.Position - start);
-            bw.WriteUTF16(Name, true);
+            bw.WriteUtf16(Name, true);
 
-            bw.Pad(4);
+            bw.Align(4);
             bw.FillInt64("PointParentListOffset", bw.Position - start);
             bw.WriteInt16((short)_parentPointIndices.Count);
             bw.WriteInt16s(_parentPointIndices);
 
-            bw.Pad(4);
+            bw.Align(4);
             bw.FillInt64("PointChildListOffset", bw.Position - start);
             bw.WriteInt16((short)_childPointIndices.Count);
             bw.WriteInt16s(_childPointIndices);
 
-            bw.Pad(8);
+            bw.Align(8);
             bw.FillInt64("PointFormOffset", Form == null ? 0 : bw.Position - start);
             Form?.Write(bw);
 
@@ -228,12 +228,12 @@ public partial class MSB_NR
             Common.Write(bw);
 
             if (Type == PointType.Other || Type >= PointType.MufflingBox)
-                bw.Pad(8);
+                bw.Align(8);
             bw.FillInt64("PointTypeOffset", TypeData == null ? 0 : bw.Position - start);
             TypeData?.Write(bw);
 
             if (Type != PointType.Other && Type < PointType.MufflingBox)
-                bw.Pad(8);
+                bw.Align(8);
             bw.FillInt64("PointOffset98", bw.Position - start);
             Struct98.Write(bw);
         }

@@ -115,7 +115,7 @@ public partial class MSB_NR
             bw.WriteInt32(0);
 
             bw.FillInt64("RouteNameOffset", bw.Position - start);
-            bw.WriteUTF16(Name, true);
+            bw.WriteUtf16(Name, true);
         }
 
         public override string ToString()

@@ -11,7 +11,7 @@ public class BexReader
     /// <summary>
     /// Size of stack-allocated buffers for string reading, in bytes; must be even and at least 2.
     /// </summary>
-    private const int STRING_BUFFER_STACK_LIMIT = 128;
+    private const int STRING_BUFFER_STACK_SIZE = 128;
 
     private readonly byte[]? _raw = null;
     private readonly Stack<long> _jumps;
@@ -86,9 +86,9 @@ public class BexReader
         return pos;
     }
 
-    protected T PeekFinish<T>(long pos, T value)
+    protected T PeekFinish<T>(long position, T value)
     {
-        Stream.Position = pos;
+        Stream.Position = position;
         return value;
     }
 
@@ -115,11 +115,11 @@ public class BexReader
 
     public void AssertPattern(int length, byte pattern)
     {
-        byte[] bytes = ReadBytes(length);
+        var buffer = ReadDirect(length);
         for (int i = 0; i < length; i++)
         {
-            if (bytes[i] != pattern)
-                throw new InvalidDataException($"Expected {length} 0x{pattern:X2}, got 0x{bytes[i]:X2} at position {i}");
+            if (buffer[i] != pattern)
+                throw new InvalidDataException($"Expected {length} 0x{pattern:X2}, got 0x{buffer[i]:X2} at position {i}");
         }
     }
     #endregion
@@ -634,7 +634,7 @@ public class BexReader
     #region String
     protected string ReadString(Encoding encoding)
     {
-        Span<byte> buffer = stackalloc byte[STRING_BUFFER_STACK_LIMIT];
+        Span<byte> buffer = stackalloc byte[STRING_BUFFER_STACK_SIZE];
         int length = 0;
 
         byte unit = ReadByte();
@@ -676,12 +676,12 @@ public class BexReader
         return PeekFinish(PeekStart(position), ReadString(encoding, length));
     }
 
-    protected string AssertString(Encoding encoding, params ReadOnlySpan<string> values)
+    protected string AssertString(Encoding encoding, params ReadOnlySpan<string> options)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(values.Length);
+        ArgumentOutOfRangeException.ThrowIfZero(options.Length);
 
-        int length = encoding.GetByteCount(values[0]);
-        return AssertValue(ReadString(encoding, length), values);
+        int length = encoding.GetByteCount(options[0]);
+        return AssertValue(ReadString(encoding, length), options);
     }
 
     public string ReadAscii() => ReadString(Encoding.ASCII);
@@ -689,18 +689,18 @@ public class BexReader
     public string ReadAsciiFixed(int length) => ReadStringFixed(Encoding.ASCII, length);
     public string PeekAscii(long position) => PeekString(position, Encoding.ASCII);
     public string PeekAscii(long position, int length) => PeekString(position, Encoding.ASCII, length);
-    public string AssertAscii(params ReadOnlySpan<string> values) => AssertString(Encoding.ASCII, values);
+    public string AssertAscii(params ReadOnlySpan<string> options) => AssertString(Encoding.ASCII, options);
 
     public string ReadShiftJis() => ReadString(ExtraEncoding.ShiftJis);
     public string ReadShiftJis(int length) => ReadString(ExtraEncoding.ShiftJis, length);
     public string ReadShiftJisFixed(int length) => ReadStringFixed(ExtraEncoding.ShiftJis, length);
     public string PeekShiftJis(long position) => PeekString(position, ExtraEncoding.ShiftJis);
     public string PeekShiftJis(long position, int length) => PeekString(position, ExtraEncoding.ShiftJis, length);
-    public string AssertShiftJis(params ReadOnlySpan<string> values) => AssertString(ExtraEncoding.ShiftJis, values);
+    public string AssertShiftJis(params ReadOnlySpan<string> options) => AssertString(ExtraEncoding.ShiftJis, options);
 
     protected string ReadWString(Encoding encoding)
     {
-        Span<byte> buffer = stackalloc byte[STRING_BUFFER_STACK_LIMIT];
+        Span<byte> buffer = stackalloc byte[STRING_BUFFER_STACK_SIZE];
         int length = 0;
 
         Span<byte> span = stackalloc byte[2];
@@ -750,12 +750,12 @@ public class BexReader
         return PeekFinish(PeekStart(position), ReadWString(encoding, length));
     }
 
-    protected string AssertWString(Encoding encoding, params ReadOnlySpan<string> values)
+    protected string AssertWString(Encoding encoding, params ReadOnlySpan<string> options)
     {
-        ArgumentOutOfRangeException.ThrowIfZero(values.Length);
+        ArgumentOutOfRangeException.ThrowIfZero(options.Length);
 
-        int length = encoding.GetByteCount(values[0]);
-        return AssertValue(ReadWString(encoding, length), values);
+        int length = encoding.GetByteCount(options[0]);
+        return AssertValue(ReadWString(encoding, length), options);
     }
 
     private Encoding Utf16Encoding => BigEndian ? Encoding.BigEndianUnicode : Encoding.Unicode;
@@ -764,7 +764,7 @@ public class BexReader
     public string ReadUtf16Fixed(int length) => ReadWStringFixed(Utf16Encoding, length);
     public string PeekUtf16(long position) => PeekWString(position, Utf16Encoding);
     public string PeekUtf16(long position, int length) => PeekWString(position, Utf16Encoding, length);
-    public string AssertUtf16(params ReadOnlySpan<string> values) => AssertWString(Utf16Encoding, values);
+    public string AssertUtf16(params ReadOnlySpan<string> options) => AssertWString(Utf16Encoding, options);
     #endregion
 
     #region Other

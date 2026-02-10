@@ -50,7 +50,7 @@ public abstract class CompressibleFileFormat
         if (compression == DCX.Type.None)
         {
             using var fs = File.Create(path);
-            var bw = new BexWriter(false, fs);
+            var bw = new BexWriter(fs, false);
             write(bw);
             bw.Finish();
         }

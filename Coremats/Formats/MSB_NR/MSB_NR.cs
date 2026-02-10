@@ -61,7 +61,7 @@ public partial class MSB_NR : CompressibleFileFormat
         Points.PreprocessStage2(this);
         Parts.PreprocessStage2(this);
 
-        bw.WriteASCII("MSB ");
+        bw.WriteAscii("MSB ");
         bw.WriteInt32(1);
         bw.WriteInt32(0x10);
         bw.WriteByte(0);
@@ -128,16 +128,16 @@ public partial class MSB_NR : CompressibleFileFormat
             bw.ReserveInt64("NextParamOffset");
 
             bw.FillInt64("ParamNameOffset", bw.Position);
-            bw.WriteUTF16(Name, true);
+            bw.WriteUtf16(Name, true);
 
             for (int i = 0; i < Entries.Count; i++)
             {
-                bw.Pad(8);
+                bw.Align(8);
                 bw.FillInt64($"EntryOffset[{i}]", bw.Position);
                 Entries[i].Write(bw, Version);
             }
 
-            bw.Pad(8);
+            bw.Align(8);
             if (lastParam)
                 bw.FillInt64("NextParamOffset", 0);
             else

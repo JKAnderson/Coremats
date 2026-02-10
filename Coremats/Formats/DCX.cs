@@ -428,7 +428,7 @@ public static class DCX
     {
         using (FileStream stream = File.Create(path))
         {
-            BexWriter bw = new BexWriter(true, stream);
+            BexWriter bw = new BexWriter(stream, true);
             Compress(data, bw, type);
             bw.Finish();
         }
@@ -464,8 +464,8 @@ public static class DCX
 
     private static void CompressDCPDFLT(byte[] data, BexWriter bw)
     {
-        bw.WriteASCII("DCP\0");
-        bw.WriteASCII("DFLT");
+        bw.WriteAscii("DCP\0");
+        bw.WriteAscii("DFLT");
         bw.WriteInt32(0x20);
         bw.WriteByte(9);
         bw.WriteByte(0);
@@ -476,14 +476,14 @@ public static class DCX
         bw.WriteInt32(0);
         bw.WriteInt32(0x00010100);
 
-        bw.WriteASCII("DCS\0");
+        bw.WriteAscii("DCS\0");
         bw.WriteInt32(data.Length);
         bw.ReserveInt32("CompressedSize");
 
         int compressedSize = SFUtil.WriteZlib(bw, 0xDA, data);
         bw.FillInt32("CompressedSize", compressedSize);
 
-        bw.WriteASCII("DCA\0");
+        bw.WriteAscii("DCA\0");
         bw.WriteInt32(8);
     }
 
@@ -493,19 +493,19 @@ public static class DCX
         if (data.Length % 0x10000 > 0)
             chunkCount++;
 
-        bw.WriteASCII("DCX\0");
+        bw.WriteAscii("DCX\0");
         bw.WriteInt32(0x10000);
         bw.WriteInt32(0x18);
         bw.WriteInt32(0x24);
         bw.WriteInt32(0x24);
         bw.WriteInt32(0x50 + chunkCount * 0x10);
 
-        bw.WriteASCII("DCS\0");
+        bw.WriteAscii("DCS\0");
         bw.WriteInt32(data.Length);
         bw.ReserveInt32("CompressedSize");
 
-        bw.WriteASCII("DCP\0");
-        bw.WriteASCII("EDGE");
+        bw.WriteAscii("DCP\0");
+        bw.WriteAscii("EDGE");
         bw.WriteInt32(0x20);
         bw.WriteByte(9);
         bw.WriteByte(0);
@@ -517,10 +517,10 @@ public static class DCX
         bw.WriteInt32(0x00100100);
 
         long dcaStart = bw.Position;
-        bw.WriteASCII("DCA\0");
+        bw.WriteAscii("DCA\0");
         bw.ReserveInt32("DCASize");
         long egdtStart = bw.Position;
-        bw.WriteASCII("EgdT");
+        bw.WriteAscii("EgdT");
         bw.WriteInt32(0x00010100);
         bw.WriteInt32(0x24);
         bw.WriteInt32(0x10);
@@ -571,7 +571,7 @@ public static class DCX
             bw.FillInt32($"ChunkOffset{i}", (int)(bw.Position - dataStart));
             bw.FillInt32($"ChunkSize{i}", chunk.Length);
             bw.WriteBytes(chunk);
-            bw.Pad(0x10);
+            bw.Align(0x10);
         }
 
         bw.FillInt32("CompressedSize", compressedSize);
@@ -585,19 +585,19 @@ public static class DCX
         byte level = (byte)(type == Type.DCX_DFLT_11000_44_8 ? 8 : 9);
         byte unk38 = (byte)(type == Type.DCX_DFLT_11000_44_9_15 ? 15 : 0);
 
-        bw.WriteASCII("DCX\0");
+        bw.WriteAscii("DCX\0");
         bw.WriteInt32(unk04);
         bw.WriteInt32(0x18);
         bw.WriteInt32(0x24);
         bw.WriteInt32(unk10);
         bw.WriteInt32(unk14);
 
-        bw.WriteASCII("DCS\0");
+        bw.WriteAscii("DCS\0");
         bw.WriteInt32(data.Length);
         bw.ReserveInt32("CompressedSize");
 
-        bw.WriteASCII("DCP\0");
-        bw.WriteASCII("DFLT");
+        bw.WriteAscii("DCP\0");
+        bw.WriteAscii("DFLT");
         bw.WriteInt32(0x20);
         bw.WriteByte(level);
         bw.WriteByte(0);
@@ -611,7 +611,7 @@ public static class DCX
         bw.WriteInt32(0);
         bw.WriteInt32(0x00010100);
 
-        bw.WriteASCII("DCA\0");
+        bw.WriteAscii("DCA\0");
         bw.WriteInt32(8);
 
         long compressedStart = bw.Position;
@@ -624,19 +624,19 @@ public static class DCX
         byte level = (byte)(type == Type.DCX_KRAK_6 ? 6 : 9);
         byte[] compressed = Oodle.Compress(data, Noodle.Oodle2_9.OodleLZ.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, (Noodle.Oodle2_9.OodleLZ.OodleLZ_CompressionLevel)level);
 
-        bw.WriteASCII("DCX\0");
+        bw.WriteAscii("DCX\0");
         bw.WriteInt32(0x11000);
         bw.WriteInt32(0x18);
         bw.WriteInt32(0x24);
         bw.WriteInt32(0x44);
         bw.WriteInt32(0x4C);
 
-        bw.WriteASCII("DCS\0");
+        bw.WriteAscii("DCS\0");
         bw.WriteUInt32((uint)data.Length);
         bw.WriteUInt32((uint)compressed.Length);
 
-        bw.WriteASCII("DCP\0");
-        bw.WriteASCII("KRAK");
+        bw.WriteAscii("DCP\0");
+        bw.WriteAscii("KRAK");
         bw.WriteInt32(0x20);
         bw.WriteByte(level);
         bw.WriteByte(0);
@@ -647,11 +647,11 @@ public static class DCX
         bw.WriteInt32(0);
         bw.WriteInt32(0x10100);
 
-        bw.WriteASCII("DCA\0");
+        bw.WriteAscii("DCA\0");
         bw.WriteInt32(8);
 
         bw.WriteBytes(compressed);
-        bw.Pad(0x10);
+        bw.Align(0x10);
     }
 
     private static void CompressDCXZSTD(byte[] data, BexWriter bw, Type type)
@@ -662,19 +662,19 @@ public static class DCX
         compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_windowLog, 16);
         byte[] compressed = compressor.Wrap(data).ToArray();
 
-        bw.WriteASCII("DCX\0");
+        bw.WriteAscii("DCX\0");
         bw.WriteInt32(0x11000);
         bw.WriteInt32(0x18);
         bw.WriteInt32(0x24);
         bw.WriteInt32(0x44);
         bw.WriteInt32(0x4C);
 
-        bw.WriteASCII("DCS\0");
+        bw.WriteAscii("DCS\0");
         bw.WriteUInt32((uint)data.Length);
         bw.WriteUInt32((uint)compressed.Length);
 
-        bw.WriteASCII("DCP\0");
-        bw.WriteASCII("ZSTD");
+        bw.WriteAscii("DCP\0");
+        bw.WriteAscii("ZSTD");
         bw.WriteInt32(0x20);
         bw.WriteByte(level);
         bw.WriteByte(0);
@@ -685,11 +685,11 @@ public static class DCX
         bw.WriteInt32(0);
         bw.WriteInt32(0x10100);
 
-        bw.WriteASCII("DCA\0");
+        bw.WriteAscii("DCA\0");
         bw.WriteInt32(8);
 
         bw.WriteBytes(compressed);
-        bw.Pad(0x10);
+        bw.Align(0x10);
     }
 
     /// <summary>

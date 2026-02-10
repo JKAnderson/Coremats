@@ -246,12 +246,12 @@ public partial class MSB_NR
             bw.WriteInt64(0);
 
             bw.FillInt64("PartNameOffset", bw.Position - start);
-            bw.WriteUTF16(Name, true);
+            bw.WriteUtf16(Name, true);
 
             bw.FillInt64("PartFileOffset", bw.Position - start);
-            bw.WriteUTF16(File, true);
+            bw.WriteUtf16(File, true);
 
-            bw.Pad(8);
+            bw.Align(8);
             bw.FillInt64("PartOffset50", bw.Position - start);
             Struct50.Write(bw);
 
