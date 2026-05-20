@@ -26,7 +26,13 @@ public static class SaveLoad2
     {
         var aes = Aes.Create();
         aes.Mode = CipherMode.CBC;
-        aes.Padding = PaddingMode.PKCS7;
+        // FromSoft *almost* uses PKCS7 padding, but they neglect to include a padding block
+        // when the plaintext is a multiple of the block size, so it cannot be reliably stripped.
+        // In practice this only actually happens in DS2 so I don't know if the other games
+        // technically have the same bug, but I don't think it's worth adding a switch to the API.
+        // SL2 files always include an internal data length field, so consumers can
+        // strip and regenerate authentically incorrect padding as they wish.
+        aes.Padding = PaddingMode.None;
         aes.Key = key;
         return aes;
     }
