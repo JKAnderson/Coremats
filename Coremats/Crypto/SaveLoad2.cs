@@ -45,7 +45,8 @@ public static class SaveLoad2
 
         using var aes = CreateAes(key);
         iv = encrypted[..IV_SIZE];
-        return aes.DecryptCbc(encrypted[IV_SIZE..], iv, aes.Padding);
+        var ciphertext = encrypted[IV_SIZE..];
+        return aes.DecryptCbc(ciphertext, iv, aes.Padding);
     }
 
     public static byte[] EncryptFile(ReadOnlySpan<byte> unencrypted, byte[] key)
@@ -61,7 +62,6 @@ public static class SaveLoad2
 
         using var aes = CreateAes(key);
         int cipherLength = aes.GetCiphertextLengthCbc(unencrypted.Length, aes.Padding);
-
         var encrypted = new byte[IV_SIZE + cipherLength];
         iv.CopyTo(encrypted);
         aes.EncryptCbc(unencrypted, iv, encrypted.AsSpan(IV_SIZE), aes.Padding);
