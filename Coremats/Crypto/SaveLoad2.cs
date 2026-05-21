@@ -51,9 +51,9 @@ public static class SaveLoad2
 
     public static byte[] EncryptFile(ReadOnlySpan<byte> unencrypted, byte[] key)
     {
-        // Oh no I'm creating an extra instance just to have it generate an IV for me
-        using var aes = CreateAes(key);
-        return EncryptFile(unencrypted, key, aes.IV);
+        Span<byte> iv = stackalloc byte[IV_SIZE];
+        RandomNumberGenerator.Fill(iv);
+        return EncryptFile(unencrypted, key, iv);
     }
 
     public static byte[] EncryptFile(ReadOnlySpan<byte> unencrypted, byte[] key, ReadOnlySpan<byte> iv)

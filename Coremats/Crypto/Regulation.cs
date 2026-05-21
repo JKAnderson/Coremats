@@ -1,4 +1,7 @@
-﻿using System.Security.Cryptography;
+﻿using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
+using System.Security.Cryptography;
 using System.Text;
 using static Coremats.Crypto.Util;
 
@@ -6,7 +9,10 @@ namespace Coremats.Crypto;
 
 public static class Regulation
 {
-    private const int IV_SIZE = 16;
+    private const int CBC_IV_SIZE = 16;
+    private const int CTR_PARTIAL_IV_SIZE = 11;
+    private const int CTR_GOOP_SIZE = 21;
+    private const int CTR_HEADER_SIZE = CTR_PARTIAL_IV_SIZE + CTR_GOOP_SIZE;
 
     public static byte[] ArmoredCore6Key
         => ParseHexString("10 CE ED 47 7B 7C D9 D7 E6 93 8E 11 47 13 E7 87 D5 39 13 B1 0D 31 8E C1 35 E4 BE 50 50 4E 0E 10");
@@ -32,31 +38,81 @@ public static class Regulation
 
     public static byte[] DecryptRegulationCbc(ReadOnlySpan<byte> encrypted, byte[] key, out ReadOnlySpan<byte> iv)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(encrypted.Length, IV_SIZE);
+        ArgumentOutOfRangeException.ThrowIfLessThan(encrypted.Length, CBC_IV_SIZE);
 
         using var aes = CreateAesCbc(key);
-        iv = encrypted[..IV_SIZE];
-        var ciphertext = encrypted[IV_SIZE..];
+        iv = encrypted[..CBC_IV_SIZE];
+        var ciphertext = encrypted[CBC_IV_SIZE..];
         return aes.DecryptCbc(ciphertext, iv, aes.Padding);
     }
 
     public static byte[] EncryptRegulationCbc(ReadOnlySpan<byte> unencrypted, byte[] key)
     {
         // Arbitrary IVs are supported, but in practice FromSoft always uses 0 so that's what I'll default to
-        Span<byte> iv = stackalloc byte[IV_SIZE];
+        Span<byte> iv = stackalloc byte[CBC_IV_SIZE];
         iv.Clear();
         return EncryptRegulationCbc(unencrypted, key, iv);
     }
 
     public static byte[] EncryptRegulationCbc(ReadOnlySpan<byte> unencrypted, byte[] key, ReadOnlySpan<byte> iv)
     {
-        ArgumentOutOfRangeException.ThrowIfNotEqual(iv.Length, IV_SIZE);
+        ArgumentOutOfRangeException.ThrowIfNotEqual(iv.Length, CBC_IV_SIZE);
 
         using var aes = CreateAesCbc(key);
         int cipherLength = aes.GetCiphertextLengthCbc(unencrypted.Length, aes.Padding);
-        var encrypted = new byte[IV_SIZE + cipherLength];
+        var encrypted = new byte[CBC_IV_SIZE + cipherLength];
         iv.CopyTo(encrypted);
-        aes.EncryptCbc(unencrypted, iv, encrypted.AsSpan(IV_SIZE), aes.Padding);
+        aes.EncryptCbc(unencrypted, iv, encrypted.AsSpan(CBC_IV_SIZE), aes.Padding);
+        return encrypted;
+    }
+
+    private static IBufferedCipher GetCipherCtr(byte[] key, ReadOnlySpan<byte> iv, bool forEncryption)
+    {
+        var cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
+        var parameters = new ParametersWithIV(new KeyParameter(key), iv);
+        cipher.Init(forEncryption, parameters);
+        return cipher;
+    }
+
+    public static byte[] DecryptRegulationCtr(ReadOnlySpan<byte> encrypted, byte[] key) => DecryptRegulationCtr(encrypted, key, out _);
+
+    public static byte[] DecryptRegulationCtr(ReadOnlySpan<byte> encrypted, byte[] key, out ReadOnlySpan<byte> partialIv)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(encrypted.Length, CTR_PARTIAL_IV_SIZE + CTR_GOOP_SIZE);
+
+        partialIv = encrypted[..CTR_PARTIAL_IV_SIZE];
+        ReadOnlySpan<byte> iv = [0x80, .. partialIv, 0x00, 0x00, 0x00, 0x01];
+        var ciphertext = encrypted[CTR_HEADER_SIZE..];
+
+        var cipher = GetCipherCtr(key, iv, false);
+        int outputSize = cipher.GetOutputSize(ciphertext.Length);
+
+        var unencrypted = new byte[outputSize];
+        cipher.DoFinal(ciphertext, unencrypted);
+        return unencrypted;
+    }
+
+    private static byte[] EncryptRegulationCtr(ReadOnlySpan<byte> unencrypted, byte[] key)
+    {
+        Span<byte> partialIv = stackalloc byte[CTR_PARTIAL_IV_SIZE];
+        RandomNumberGenerator.Fill(partialIv);
+        return EncryptRegulationCtr(unencrypted, key, partialIv);
+    }
+
+    private static byte[] EncryptRegulationCtr(ReadOnlySpan<byte> unencrypted, byte[] key, ReadOnlySpan<byte> partialIv)
+    {
+        ArgumentOutOfRangeException.ThrowIfNotEqual(partialIv.Length, CTR_PARTIAL_IV_SIZE);
+
+        ReadOnlySpan<byte> iv = [0x80, .. partialIv, 0x00, 0x00, 0x00, 0x01];
+
+        var cipher = GetCipherCtr(key, iv, true);
+        int outputSize = cipher.GetOutputSize(unencrypted.Length);
+
+        var encrypted = new byte[CTR_HEADER_SIZE + outputSize];
+        partialIv.CopyTo(encrypted);
+        // There is some mysterious goop between the IV and the ciphertext, probably some kind of MAC
+        // The game will fail to decrypt the file without it, so until someone figures it out this is nonfunctional
+        cipher.DoFinal(unencrypted, encrypted.AsSpan(CTR_HEADER_SIZE));
         return encrypted;
     }
 }
