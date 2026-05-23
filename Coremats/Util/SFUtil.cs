@@ -4,49 +4,46 @@ namespace Coremats;
 
 internal static class SFUtil
 {
-    public static int WriteZlib(BexWriter bw, byte formatByte, byte[] input)
+    public static byte[] ReadZlib(BexReader br, int compressedLength)
+    {
+        // It's a bit tragic to copy all this out, but ZLibStream unavoidably (as far as I know)
+        // reads all the way to the end of the stream, which seems like a bad idea for various reasons
+        byte[] input = br.ReadBytes(compressedLength);
+        using var inStream = new MemoryStream(input);
+        using var outStream = new MemoryStream();
+        using (var zs = new ZLibStream(inStream, CompressionMode.Decompress))
+        {
+            zs.CopyTo(outStream);
+        }
+        return outStream.ToArray();
+    }
+
+    public static byte[] ReadZlib(BexReader br, int compressedLength, int uncompressedLength)
+    {
+        byte[] input = br.ReadBytes(compressedLength);
+        var output = new byte[uncompressedLength];
+        using var inStream = new MemoryStream(input);
+        using var zs = new ZLibStream(inStream, CompressionMode.Decompress);
+        zs.ReadExactly(output);
+        return output;
+    }
+
+    public static void ReadZlib(BexReader br, int compressedLength, Span<byte> output)
+    {
+        byte[] input = br.ReadBytes(compressedLength);
+        using var inStream = new MemoryStream(input);
+        using var zs = new ZLibStream(inStream, CompressionMode.Decompress);
+        zs.ReadExactly(output);
+    }
+
+    public static int WriteZlib(BexWriter bw, byte[] input)
     {
         long start = bw.Position;
-        bw.WriteByte(0x78);
-        bw.WriteByte(formatByte);
-
-        using (var deflateStream = new DeflateStream(bw.Stream, CompressionMode.Compress, true))
+        var options = new ZLibCompressionOptions() { CompressionLevel = 9 };
+        using (var zs = new ZLibStream(bw.Stream, options, true))
         {
-            deflateStream.Write(input, 0, input.Length);
+            zs.Write(input);
         }
-
-        bw.WriteUInt32(Adler32(input));
         return (int)(bw.Position - start);
-    }
-
-    public static byte[] ReadZlib(BexReader br, int compressedSize)
-    {
-        br.AssertByte(0x78);
-        br.AssertByte(0x01, 0x5E, 0x9C, 0xDA);
-        byte[] compressed = br.ReadBytes(compressedSize - 2);
-
-        using (var decompressedStream = new MemoryStream())
-        {
-            using (var compressedStream = new MemoryStream(compressed))
-            using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress, true))
-            {
-                deflateStream.CopyTo(decompressedStream);
-            }
-            return decompressedStream.ToArray();
-        }
-    }
-
-    public static uint Adler32(byte[] data)
-    {
-        uint adlerA = 1;
-        uint adlerB = 0;
-
-        foreach (byte b in data)
-        {
-            adlerA = (adlerA + b) % 65521;
-            adlerB = (adlerB + adlerA) % 65521;
-        }
-
-        return (adlerB << 16) | adlerA;
     }
 }
