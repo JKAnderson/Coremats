@@ -50,7 +50,7 @@ public static partial class DCX
             }
         }
 
-        private DcaStruct WriteReserve(bool reserve, BexWriter bw, DcpStruct dcp, bool isDcxFormat, int blockCount)
+        private readonly DcaStruct WriteReserve(bool reserve, BexWriter bw, DcpStruct dcp, bool isDcxFormat, int? blockCount)
         {
             long dcaStart = bw.Position;
             bw.WriteAscii("DCA\0");
@@ -71,10 +71,10 @@ public static partial class DCX
                         bw.WriteInt32(TrailingBlockLengthUncompressed);
                 }
                 bw.ReserveInt32("EgdtSize");
-                bw.WriteInt32(blockCount);
+                bw.WriteInt32(blockCount.Value);
                 bw.WriteInt32(0x100000);
 
-                for (int i = 0; i < blockCount; i++)
+                for (int i = 0; i < blockCount.Value; i++)
                 {
                     if (reserve)
                         DcaBlockInfo.Reserve(bw, i);
@@ -88,13 +88,13 @@ public static partial class DCX
             return this;
         }
 
-        public DcaStruct Write(BexWriter bw, DcpStruct dcp, bool isDcxFormat)
-            => WriteReserve(false, bw, dcp, isDcxFormat, BlockInfo.Length);
+        public readonly DcaStruct Write(BexWriter bw, DcpStruct dcp, bool isDcxFormat)
+            => WriteReserve(false, bw, dcp, isDcxFormat, BlockInfo?.Length);
 
-        public DcaStruct Reserve(BexWriter bw, DcpStruct dcp, bool isDcxFormat, int blockCount)
+        public readonly DcaStruct Reserve(BexWriter bw, DcpStruct dcp, bool isDcxFormat, int blockCount)
             => WriteReserve(true, bw, dcp, isDcxFormat, blockCount);
 
-        public void Fill(BexWriter bw)
+        public readonly void Fill(BexWriter bw)
         {
             bw.FillInt32(nameof(TrailingBlockLengthUncompressed), TrailingBlockLengthUncompressed);
             for (int i = 0; i < BlockInfo.Length; i++)

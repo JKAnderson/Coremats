@@ -2,21 +2,21 @@
 
 public static partial class DCX
 {
-    private struct DcpStruct
+    private readonly struct DcpStruct
     {
         public string Algorithm
         {
             get;
-            set
+            private init
             {
                 ArgumentOutOfRangeException.ThrowIfNotEqual(value.Length, 4);
                 field = value;
             }
         }
-        public byte Level { get; set; }
-        public int BlockSize { get; set; }
-        public byte Header { get; set; }
-        public short AlignSize { get; set; }
+        public byte Level { get; }
+        public int BlockSize { get; }
+        public byte Header { get; }
+        public short AlignSize { get; }
 
         public DcpStruct(string algorithm, byte level, int blockSize, byte header, short alignSize)
         {

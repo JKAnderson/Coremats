@@ -4,7 +4,7 @@ public static partial class DCX
 {
     private struct DcsStruct
     {
-        public int DataLengthUncompressed { get; set; }
+        public int DataLengthUncompressed { get; }
         public int DataLengthCompressed { get; set; }
 
         public DcsStruct(int dataLengthUncompressed)
@@ -25,7 +25,7 @@ public static partial class DCX
             DataLengthCompressed = br.ReadInt32();
         }
 
-        public DcsStruct Write(BexWriter bw)
+        public readonly DcsStruct Write(BexWriter bw)
         {
             bw.WriteAscii("DCS\0");
             bw.WriteInt32(DataLengthUncompressed);
@@ -33,7 +33,7 @@ public static partial class DCX
             return this;
         }
 
-        public DcsStruct Reserve(BexWriter bw)
+        public readonly DcsStruct Reserve(BexWriter bw)
         {
             bw.WriteAscii("DCS\0");
             bw.WriteInt32(DataLengthUncompressed);
@@ -41,7 +41,7 @@ public static partial class DCX
             return this;
         }
 
-        public void Fill(BexWriter bw)
+        public readonly void Fill(BexWriter bw)
         {
             bw.FillInt32("DataLengthCompressed", DataLengthCompressed);
         }

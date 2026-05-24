@@ -152,7 +152,7 @@ public static partial class DCX
         long dataStart = br.Position;
         br.Skip(dcs.DataLengthCompressed);
 
-        var dca = new DcaStruct(br, dcp, true);
+        var dca = new DcaStruct(br, dcp, false);
 
         type = Type.DCP_EDGE;
         return ReadEdgeData(br, dcs, dca, dataStart);
@@ -174,14 +174,16 @@ public static partial class DCX
 
         _ = new DcaStruct(br, dcp, true);
 
-        if (dcx.Unk04 == 0x10000 && dcp.Level == 9 && dcp.Header == 0)
-            type = Type.DCX_DFLT_10000_9;
-        else if (dcx.Unk04 == 0x11000 && dcp.Level == 8 && dcp.Header == 0)
-            type = Type.DCX_DFLT_11000_8;
-        else if (dcx.Unk04 == 0x11000 && dcp.Level == 9 && dcp.Header == 0)
-            type = Type.DCX_DFLT_11000_9;
-        else if (dcx.Unk04 == 0x11000 && dcp.Level == 9 && dcp.Header == 15)
-            type = Type.DCX_DFLT_11000_9_15;
+        if (dcx.LegacyOffsets && dcx.Unk04 == 0x10000 && dcp.Level == 9 && dcp.Header == 0)
+            type = Type.DCX_DFLT_10000_24_9;
+        else if (!dcx.LegacyOffsets && dcx.Unk04 == 0x10000 && dcp.Level == 9 && dcp.Header == 0)
+            type = Type.DCX_DFLT_10000_44_9;
+        else if (!dcx.LegacyOffsets && dcx.Unk04 == 0x11000 && dcp.Level == 8 && dcp.Header == 0)
+            type = Type.DCX_DFLT_11000_44_8;
+        else if (!dcx.LegacyOffsets && dcx.Unk04 == 0x11000 && dcp.Level == 9 && dcp.Header == 0)
+            type = Type.DCX_DFLT_11000_44_9;
+        else if (!dcx.LegacyOffsets && dcx.Unk04 == 0x11000 && dcp.Level == 9 && dcp.Header == 15)
+            type = Type.DCX_DFLT_11000_44_9_15;
         else
             throw new NotImplementedException($"Unimplemented DCX DFLT permutation.");
 
@@ -191,6 +193,7 @@ public static partial class DCX
     private static byte[] DecompressDcxEdge(BexReader br, out Type type)
     {
         var dcx = new DcxStruct(br);
+        if (!dcx.LegacyOffsets) throw new InvalidDataException();
         if (dcx.Unk04 != 0x10000) throw new InvalidDataException();
 
         var dcs = new DcsStruct(br);
@@ -212,6 +215,7 @@ public static partial class DCX
     private static byte[] DecompressDcxKrak(BexReader br, out Type type)
     {
         var dcx = new DcxStruct(br);
+        if (dcx.LegacyOffsets) throw new InvalidDataException();
         if (dcx.Unk04 != 0x11000) throw new InvalidDataException();
 
         var dcs = new DcsStruct(br);
@@ -239,6 +243,7 @@ public static partial class DCX
     private static byte[] DecompressDcxZstd(BexReader br, out Type type)
     {
         var dcx = new DcxStruct(br);
+        if (dcx.LegacyOffsets) throw new InvalidDataException();
         if (dcx.Unk04 != 0x11000) throw new InvalidDataException();
 
         var dcs = new DcsStruct(br);
@@ -287,15 +292,16 @@ public static partial class DCX
     {
         bw.BigEndian = true;
         if (type == Type.Zlib)
-            SFUtil.WriteZlib(bw, data);
+            SFUtil.WriteZlib(bw, data, -1);
         else if (type == Type.DCP_DFLT)
             CompressDcpDflt(data, bw);
         else if (type == Type.DCP_EDGE)
             CompressDcpEdge(data, bw);
-        else if (type == Type.DCX_DFLT_10000_9
-            || type == Type.DCX_DFLT_11000_8
-            || type == Type.DCX_DFLT_11000_9
-            || type == Type.DCX_DFLT_11000_9_15)
+        else if (type == Type.DCX_DFLT_10000_24_9
+            || type == Type.DCX_DFLT_10000_44_9
+            || type == Type.DCX_DFLT_11000_44_8
+            || type == Type.DCX_DFLT_11000_44_9
+            || type == Type.DCX_DFLT_11000_44_9_15)
             CompressDcxDflt(data, bw, type);
         else if (type == Type.DCX_EDGE)
             CompressDcxEdge(data, bw);
@@ -311,20 +317,20 @@ public static partial class DCX
             throw new NotImplementedException("Compression for the given type is not implemented.");
     }
 
-    private static DcaBlockInfo[] WriteEdgeData(BexWriter bw, byte[] data, int blockCount, long dataOffset)
+    private static DcaBlockInfo[] WriteEdgeData(BexWriter bw, DcpStruct dcp, byte[] data, int blockCount, long dataOffset)
     {
+        var zlibOptions = new ZLibCompressionOptions() { CompressionLevel = dcp.Level };
         var blockInfo = new DcaBlockInfo[blockCount];
         for (int i = 0; i < blockCount; i++)
         {
-            int blockLengthUncompressed = 0x10000;
-            if (i == blockCount - 1)
-                blockLengthUncompressed = data.Length % 0x10000;
+            int blockOffsetUncompressed = i * 0x10000;
+            int blockLengthUncompressed = Math.Min(0x10000, data.Length - blockOffsetUncompressed);
 
-            var blockDataUncompressed = data.AsSpan(i * 0x10000, blockLengthUncompressed);
+            var blockDataUncompressed = data.AsSpan(blockOffsetUncompressed, blockLengthUncompressed);
             byte[] blockDataCompressed;
             using (var ms = new MemoryStream())
             {
-                using (var ds = new DeflateStream(ms, CompressionMode.Compress))
+                using (var ds = new DeflateStream(ms, zlibOptions))
                 {
                     ds.Write(blockDataUncompressed);
                 }
@@ -357,9 +363,9 @@ public static partial class DCX
 
         var dcs = new DcsStruct(data.Length).Reserve(bw);
 
-        dcs.DataLengthCompressed = SFUtil.WriteZlib(bw, data);
+        dcs.DataLengthCompressed = SFUtil.WriteZlib(bw, data, dcp.Level);
 
-        var dca = new DcaStruct().Write(bw, dcp, false);
+        new DcaStruct().Write(bw, dcp, false);
 
         dcs.Fill(bw);
     }
@@ -374,21 +380,22 @@ public static partial class DCX
 
         bw.WriteInt32(0);
         long dataOffset = bw.Position;
-        var blockInfo = WriteEdgeData(bw, data, blockCount, dataOffset);
+        var blockInfo = WriteEdgeData(bw, dcp, data, blockCount, dataOffset);
         dcs.DataLengthCompressed = (int)(bw.Position - dataOffset);
 
-        var dca = new DcaStruct(blockInfo).Write(bw, dcp, false);
+        new DcaStruct(blockInfo).Write(bw, dcp, false);
 
         dcs.Fill(bw);
     }
 
     private static void CompressDcxDflt(byte[] data, BexWriter bw, Type type)
     {
-        int dcxUnk04 = type == Type.DCX_DFLT_10000_9 ? 0x10000 : 0x11000;
-        byte dcpLevel = (byte)(type == Type.DCX_DFLT_11000_8 ? 8 : 9);
-        byte dcpHeader = (byte)(type == Type.DCX_DFLT_11000_9_15 ? 15 : 0);
+        bool dcxLegacyOffsets = type == Type.DCX_DFLT_10000_24_9;
+        int dcxUnk04 = (type == Type.DCX_DFLT_10000_24_9 || type == Type.DCX_DFLT_10000_44_9) ? 0x10000 : 0x11000;
+        byte dcpLevel = (byte)(type == Type.DCX_DFLT_11000_44_8 ? 8 : 9);
+        byte dcpHeader = (byte)(type == Type.DCX_DFLT_11000_44_9_15 ? 15 : 0);
 
-        var dcx = new DcxStruct(dcxUnk04).Reserve(bw);
+        var dcx = new DcxStruct(dcxLegacyOffsets, dcxUnk04).Reserve(bw);
 
         long dcsOffset = bw.Position;
         var dcs = new DcsStruct(data.Length).Reserve(bw);
@@ -397,10 +404,10 @@ public static partial class DCX
         var dcp = new DcpStruct("DFLT", dcpLevel, 0, dcpHeader, 1).Write(bw);
 
         long dcaOffset = bw.Position;
-        var dca = new DcaStruct().Write(bw, dcp, true);
+        new DcaStruct().Write(bw, dcp, true);
 
         long dataOffset = bw.Position;
-        dcs.DataLengthCompressed = SFUtil.WriteZlib(bw, data);
+        dcs.DataLengthCompressed = SFUtil.WriteZlib(bw, data, dcp.Level);
 
         dcx.Fill(bw, (int)dcsOffset, (int)dcpOffset, (int)dcaOffset, (int)dataOffset);
         dcs.Fill(bw);
@@ -409,9 +416,11 @@ public static partial class DCX
     private static void CompressDcxEdge(byte[] data, BexWriter bw)
     {
         int trailingBlockLengthUncompressed = data.Length % 0x10000;
+        if (trailingBlockLengthUncompressed == 0)
+            trailingBlockLengthUncompressed = 0x10000;
         int blockCount = (int)Math.Ceiling((float)data.Length / 0x10000);
 
-        var dcx = new DcxStruct(0x10000).Reserve(bw);
+        var dcx = new DcxStruct(true, 0x10000).Reserve(bw);
 
         long dcsOffset = bw.Position;
         var dcs = new DcsStruct(data.Length).Reserve(bw);
@@ -423,7 +432,7 @@ public static partial class DCX
         var dca = new DcaStruct().Reserve(bw, dcp, true, blockCount);
 
         long dataOffset = bw.Position;
-        var blockInfo = WriteEdgeData(bw, data, blockCount, dataOffset);
+        var blockInfo = WriteEdgeData(bw, dcp, data, blockCount, dataOffset);
         dcs.DataLengthCompressed = (int)(bw.Position - dataOffset);
         dca.TrailingBlockLengthUncompressed = trailingBlockLengthUncompressed;
         dca.BlockInfo = blockInfo;
@@ -438,16 +447,16 @@ public static partial class DCX
         byte dcpLevel = (byte)(type == Type.DCX_KRAK_6 ? 6 : 9);
         byte[] compressed = Oodle.Compress(data, Noodle.Oodle2_9.OodleLZ.OodleLZ_Compressor.OodleLZ_Compressor_Kraken, (Noodle.Oodle2_9.OodleLZ.OodleLZ_CompressionLevel)dcpLevel);
 
-        var dcx = new DcxStruct(0x11000).Reserve(bw);
+        var dcx = new DcxStruct(false, 0x11000).Reserve(bw);
 
         long dcsOffset = bw.Position;
-        var dcs = new DcsStruct(data.Length, compressed.Length).Write(bw);
+        new DcsStruct(data.Length, compressed.Length).Write(bw);
 
         long dcpOffset = bw.Position;
         var dcp = new DcpStruct("KRAK", dcpLevel, 0, 0, 1).Write(bw);
 
         long dcaOffset = bw.Position;
-        var dca = new DcaStruct().Write(bw, dcp, true);
+        new DcaStruct().Write(bw, dcp, true);
 
         long dataOffset = bw.Position;
         bw.WriteBytes(compressed);
@@ -464,16 +473,16 @@ public static partial class DCX
         compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_windowLog, 16);
         byte[] compressed = compressor.Wrap(data).ToArray();
 
-        var dcx = new DcxStruct(0x11000).Reserve(bw);
+        var dcx = new DcxStruct(false, 0x11000).Reserve(bw);
 
         long dcsOffset = bw.Position;
-        var dcs = new DcsStruct(data.Length, compressed.Length).Write(bw);
+        new DcsStruct(data.Length, compressed.Length).Write(bw);
 
         long dcpOffset = bw.Position;
         var dcp = new DcpStruct("ZSTD", dcpLevel, 0, 0, 1).Write(bw);
 
         long dcaOffset = bw.Position;
-        var dca = new DcaStruct().Write(bw, dcp, true);
+        new DcaStruct().Write(bw, dcp, true);
 
         long dataOffset = bw.Position;
         bw.WriteBytes(compressed);
@@ -515,24 +524,29 @@ public static partial class DCX
         DCX_EDGE,
 
         /// <summary>
-        /// DCX header, deflate compression. Primarily used in DS1, DS2, BB, and DS3.
+        /// DCX header, deflate compression. Primarily used in DS1 and DS2.
         /// </summary>
-        DCX_DFLT_10000_9,
+        DCX_DFLT_10000_24_9,
+
+        /// <summary>
+        /// DCX header, deflate compression. Primarily used in BB and DS3.
+        /// </summary>
+        DCX_DFLT_10000_44_9,
 
         /// <summary>
         /// DCX header, deflate compression. Used for the backup regulation in DS3 save files.
         /// </summary>
-        DCX_DFLT_11000_8,
+        DCX_DFLT_11000_44_8,
 
         /// <summary>
         /// DCX header, deflate compression. Used in Sekiro.
         /// </summary>
-        DCX_DFLT_11000_9,
+        DCX_DFLT_11000_44_9,
 
         /// <summary>
         /// DCX header, deflate compression. Used in the ER regulation.
         /// </summary>
-        DCX_DFLT_11000_9_15,
+        DCX_DFLT_11000_44_9_15,
 
         /// <summary>
         /// DCX header, Oodle compression. Used in Sekiro and Elden Ring.

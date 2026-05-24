@@ -36,10 +36,10 @@ internal static class SFUtil
         zs.ReadExactly(output);
     }
 
-    public static int WriteZlib(BexWriter bw, byte[] input)
+    public static int WriteZlib(BexWriter bw, byte[] input, int compressionLevel)
     {
         long start = bw.Position;
-        var options = new ZLibCompressionOptions() { CompressionLevel = 9 };
+        var options = new ZLibCompressionOptions() { CompressionLevel = compressionLevel };
         using (var zs = new ZLibStream(bw.Stream, options, true))
         {
             zs.Write(input);
