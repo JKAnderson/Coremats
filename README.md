@@ -17,3 +17,5 @@ No thank you!
 ## Libraries
 
 [**Bex**](https://github.com/JKAnderson/Bex) ([License](https://github.com/JKAnderson/Bex/blob/main/LICENSE))  
+[**BouncyCastle.Cryptography**](https://github.com/bcgit/bc-csharp) ([License](https://github.com/bcgit/bc-csharp/blob/master/LICENSE.md))  
+[**ZstdSharp.Port**](https://github.com/oleg-st/ZstdSharp) ([License](https://github.com/oleg-st/ZstdSharp/blob/master/LICENSE))  
