@@ -4,6 +4,15 @@ namespace Coremats;
 
 internal static class Oodle
 {
+    public static byte[] Decompress(byte[] source, long uncompressedSize)
+    {
+        long decodeBufferSize = OodleLZ_GetDecodeBufferSize(OodleLZ_Compressor.OodleLZ_Compressor_Invalid, (nint)uncompressedSize, true);
+        byte[] rawBuf = new byte[decodeBufferSize];
+        long rawLen = OodleLZ_Decompress(source, (nint)source.LongLength, rawBuf, (nint)uncompressedSize);
+        Array.Resize(ref rawBuf, (int)rawLen);
+        return rawBuf;
+    }
+
     public static byte[] Compress(byte[] source, OodleLZ_Compressor compressor, OodleLZ_CompressionLevel level)
     {
         OodleLZ_CompressOptions options = OodleLZ_CompressOptions_GetDefault(compressor, level);
@@ -17,14 +26,5 @@ internal static class Oodle
         long compLen = OodleLZ_Compress(compressor, source, (nint)source.LongLength, compBuf, level, options);
         Array.Resize(ref compBuf, (int)compLen);
         return compBuf;
-    }
-
-    public static byte[] Decompress(byte[] source, long uncompressedSize)
-    {
-        long decodeBufferSize = OodleLZ_GetDecodeBufferSize(OodleLZ_Compressor.OodleLZ_Compressor_Invalid, (nint)uncompressedSize, true);
-        byte[] rawBuf = new byte[decodeBufferSize];
-        long rawLen = OodleLZ_Decompress(source, (nint)source.LongLength, rawBuf, (nint)uncompressedSize);
-        Array.Resize(ref rawBuf, (int)rawLen);
-        return rawBuf;
     }
 }

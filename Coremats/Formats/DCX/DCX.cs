@@ -84,7 +84,7 @@ public static partial class DCX
             if (b0 == 0x78 && (b1 == 0x01 || b1 == 0x5E || b1 == 0x9C || b1 == 0xDA))
             {
                 type = Type.Zlib;
-                return SFUtil.ReadZlib(br, (int)br.Length);
+                return Zlib.Decompress(br, (int)br.Length);
             }
             else
             {
@@ -129,7 +129,7 @@ public static partial class DCX
 
         var dcs = new DcsStruct(br);
 
-        byte[] decompressed = SFUtil.ReadZlib(br, dcs.DataLengthCompressed, dcs.DataLengthUncompressed);
+        byte[] decompressed = Zlib.Decompress(br, dcs.DataLengthCompressed, dcs.DataLengthUncompressed);
 
         _ = new DcaStruct(br, dcp, false);
 
@@ -187,7 +187,7 @@ public static partial class DCX
         else
             throw new NotImplementedException($"Unimplemented DCX DFLT permutation.");
 
-        return SFUtil.ReadZlib(br, dcs.DataLengthCompressed, dcs.DataLengthUncompressed);
+        return Zlib.Decompress(br, dcs.DataLengthCompressed, dcs.DataLengthUncompressed);
     }
 
     private static byte[] DecompressDcxEdge(BexReader br, out Type type)
@@ -265,10 +265,7 @@ public static partial class DCX
             throw new NotImplementedException($"Unimplemented DCX ZSTD permutation.");
 
         byte[] compressed = br.ReadBytes(dcs.DataLengthCompressed);
-        var decompressed = new byte[dcs.DataLengthUncompressed];
-        var decompressor = new ZstdSharp.Decompressor();
-        decompressor.Unwrap(compressed, decompressed);
-        return decompressed;
+        return Zstd.Decompress(compressed, dcs.DataLengthUncompressed);
     }
 
     #region Public Compress
@@ -292,7 +289,7 @@ public static partial class DCX
     {
         bw.BigEndian = true;
         if (type == Type.Zlib)
-            SFUtil.WriteZlib(bw, data, -1);
+            Zlib.Compress(bw, data, -1);
         else if (type == Type.DCP_DFLT)
             CompressDcpDflt(data, bw);
         else if (type == Type.DCP_EDGE)
@@ -363,7 +360,7 @@ public static partial class DCX
 
         var dcs = new DcsStruct(data.Length).Reserve(bw);
 
-        dcs.DataLengthCompressed = SFUtil.WriteZlib(bw, data, dcp.Level);
+        dcs.DataLengthCompressed = Zlib.Compress(bw, data, dcp.Level);
 
         new DcaStruct().Write(bw, dcp, false);
 
@@ -407,7 +404,7 @@ public static partial class DCX
         new DcaStruct().Write(bw, dcp, true);
 
         long dataOffset = bw.Position;
-        dcs.DataLengthCompressed = SFUtil.WriteZlib(bw, data, dcp.Level);
+        dcs.DataLengthCompressed = Zlib.Compress(bw, data, dcp.Level);
 
         dcx.Fill(bw, (int)dcsOffset, (int)dcpOffset, (int)dcaOffset, (int)dataOffset);
         dcs.Fill(bw);
@@ -468,10 +465,7 @@ public static partial class DCX
     private static void CompressDcxZstd(byte[] data, BexWriter bw, Type type)
     {
         byte dcpLevel = (byte)(type == Type.DCX_ZSTD_21 ? 21 : 22);
-        var compressor = new ZstdSharp.Compressor(dcpLevel);
-        compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_contentSizeFlag, 0);
-        compressor.SetParameter(ZstdSharp.Unsafe.ZSTD_cParameter.ZSTD_c_windowLog, 16);
-        byte[] compressed = compressor.Wrap(data).ToArray();
+        byte[] compressed = Zstd.Compress(data, dcpLevel).ToArray();
 
         var dcx = new DcxStruct(false, 0x11000).Reserve(bw);
 
