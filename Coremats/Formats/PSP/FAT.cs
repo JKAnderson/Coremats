@@ -2,8 +2,7 @@
 
 public class FAT : FileFormat
 {
-    public List<Directory> Directories { get; set; }
-    public List<File> Files { get; set; }
+    public Directory RootDirectory { get; set; }
 
     public static FAT Read(string path) => ReadFile(path, br => new FAT(br));
     public static FAT Read(byte[] bytes) => ReadBytes(bytes, br => new FAT(br));
@@ -14,21 +13,7 @@ public class FAT : FileFormat
         br.ReadInt32();
         br.AssertInt32(0);
         br.AssertInt32(0);
-        br.ReadInt32();
-        int directoriesOffset = br.ReadInt32();
-        int filesOffset = br.ReadInt32();
-        int directoryCount = br.ReadInt32();
-        int fileCount = br.ReadInt32();
-
-        br.Position = directoriesOffset;
-        Directories = new(directoryCount);
-        for (int i = 0; i < directoryCount; i++)
-            Directories.Add(new(br));
-
-        br.Position = filesOffset;
-        Files = new(fileCount);
-        for (int i = 0; i < fileCount; i++)
-            Files.Add(new(br));
+        RootDirectory = new(br) { Name = null };
     }
 
     public class Directory
