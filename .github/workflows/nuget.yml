@@ -20,7 +20,7 @@ jobs:
       run: echo "PACKAGE_VERSION=0.0.0-$(date -u +'%Y.%-m.%-d.%-H.%-M.%-S')" | tee $GITHUB_ENV
 
     - name: Pack
-      run: dotnet pack --configuration Release /p:PackageId=${NUGET_ID} /p:Version=${PACKAGE_VERSION}+${GITHUB_SHA} --output .
+      run: dotnet pack --configuration Release /p:PackageId=${NUGET_ID} /p:Version=${PACKAGE_VERSION}+${GITHUB_SHA::16} --output .
 
     - name: Login
       id: login
