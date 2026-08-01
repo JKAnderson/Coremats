@@ -4,6 +4,35 @@ public abstract class CompressibleFileFormat
 {
     public DCX.Type Compression { get; set; } = DCX.Type.None;
 
+    protected static bool IsFile(string path, Func<BexReader, bool> is_)
+    {
+        using var fs = File.OpenRead(path);
+        var br = new BexReader(fs, false);
+        if (DCX.Is(br))
+        {
+            byte[] decompressed = DCX.Decompress(br, out _);
+            br = new BexReader(decompressed, false);
+        }
+
+        br.Position = 0;
+        br.BigEndian = false;
+        return is_(br);
+    }
+
+    protected static bool IsBytes(byte[] bytes, Func<BexReader, bool> is_)
+    {
+        var br = new BexReader(bytes, false);
+        if (DCX.Is(br))
+        {
+            byte[] decompressed = DCX.Decompress(br, out _);
+            br = new BexReader(decompressed, false);
+        }
+
+        br.Position = 0;
+        br.BigEndian = false;
+        return is_(br);
+    }
+
     protected static T ReadFile<T>(string path, Func<BexReader, T> read) where T : CompressibleFileFormat
     {
         using var fs = File.OpenRead(path);
